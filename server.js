@@ -1,13 +1,23 @@
 const { createServer } = require('http');
 const { parse } = require('url');
 const next = require('next');
+const path = require('path');
 
-const dev = process.env.NODE_ENV !== 'production';
-const hostname = 'localhost';
+const dev = false; // Force production for Hostinger
+const hostname = '0.0.0.0'; // Listen on all interfaces
 const port = process.env.PORT || 3000;
 
-// Initialize Next.js app
-const app = next({ dev, hostname, port });
+console.log('--- STARTING ArgenCash Server ---');
+console.log('Current Working Directory (CWD):', process.cwd());
+console.log('Directory Name (__dirname):', __dirname);
+console.log('Node Version:', process.version);
+
+const app = next({
+    dev,
+    hostname,
+    port,
+    dir: __dirname // Explicitly point to current directory
+});
 const handle = app.getRequestHandler();
 
 app.prepare().then(() => {
@@ -22,6 +32,9 @@ app.prepare().then(() => {
         }
     })
         .listen(port, () => {
-            console.log(`> Ready on http://${hostname}:${port}`);
+            console.log(`> Ready on port ${port}`);
         });
+}).catch(err => {
+    console.error('Next.js app.prepare() failed:', err);
+    process.exit(1);
 });
