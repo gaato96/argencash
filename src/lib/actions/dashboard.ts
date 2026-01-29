@@ -397,7 +397,6 @@ export async function createCurrentAccount(data: { name: string; phone?: string;
     const account = await prisma.currentAccount.create({
         data: {
             ...data,
-            currency: data.currency || 'ARS',
             tenantId: session.user.tenantId,
         },
     });
