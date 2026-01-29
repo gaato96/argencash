@@ -1,40 +1,61 @@
 const { createServer } = require('http');
 const { parse } = require('url');
 const next = require('next');
+const fs = require('fs');
 const path = require('path');
 
-const dev = false; // Force production for Hostinger
-const hostname = '0.0.0.0'; // Listen on all interfaces
-const port = process.env.PORT || 3000;
+// MANUAL LOGGING TO FILE
+const logFilePath = path.join(__dirname, 'debug.log');
+const logStream = fs.createWriteStream(logFilePath, { flags: 'a' });
+const log = (msg) => {
+    const line = new Date().toISOString() + ' : ' + msg + '\n';
+    logStream.write(line);
+    process.stdout.write(line);
+};
 
-console.log('--- STARTING ArgenCash Server ---');
-console.log('Current Working Directory (CWD):', process.cwd());
-console.log('Directory Name (__dirname):', __dirname);
-console.log('Node Version:', process.version);
+log('--- STARTING ArgenCash Server ---');
+log('CWD: ' + process.cwd());
+log('__dirname: ' + __dirname);
+log('Node Version: ' + process.version);
+
+const dev = false;
+const hostname = '0.0.0.0';
+const port = process.env.PORT || 3000;
 
 const app = next({
     dev,
     hostname,
     port,
-    dir: __dirname // Explicitly point to current directory
+    dir: __dirname
 });
 const handle = app.getRequestHandler();
 
-app.prepare().then(() => {
-    createServer(async (req, res) => {
-        try {
-            const parsedUrl = parse(req.url, true);
-            await handle(req, res, parsedUrl);
-        } catch (err) {
-            console.error('Error occurred handling', req.url, err);
-            res.statusCode = 500;
-            res.end('Internal Server Error');
-        }
+app.prepare()
+    .then(() => {
+        log('Next.js app prepared. Starting HTTP server...');
+        createServer(async (req, res) => {
+            try {
+                const parsedUrl = parse(req.url, true);
+                await handle(req, res, parsedUrl);
+            } catch (err) {
+                log('ERROR handling request ' + req.url + ' : ' + err.stack);
+                res.statusCode = 500;
+                res.end('Internal Server Error');
+            }
+        })
+            .listen(port, () => {
+                log('HTTP Server ready on port ' + port);
+            });
     })
-        .listen(port, () => {
-            console.log(`> Ready on port ${port}`);
-        });
-}).catch(err => {
-    console.error('Next.js app.prepare() failed:', err);
-    process.exit(1);
+    .catch(err => {
+        log('CRITICAL: Next.js app.prepare() failed: ' + err.stack);
+        process.exit(1);
+    });
+
+process.on('uncaughtException', (err) => {
+    log('UNCAUGHT EXCEPTION: ' + err.stack);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    log('UNHANDLED REJECTION at: ' + promise + ' reason: ' + reason);
 });
