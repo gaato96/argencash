@@ -12,7 +12,7 @@ interface Account {
     type: string;
     ownership: string;
     balance: number;
-    isPurchasing: boolean;
+    isPurchasing?: boolean;
 }
 
 interface WithdrawUSDFormProps {

@@ -12,6 +12,7 @@ interface Account {
     type: string;
     ownership: string;
     balance: number;
+    isPurchasing?: boolean;
 }
 
 interface TransferFormProps {
