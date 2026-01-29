@@ -1,0 +1,251 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Tenant {
+  id              String            @id @default(cuid())
+  name            String
+  slug            String            @unique
+  plan            String            @default("BASIC")
+  commissionRate  Float             @default(0.01)
+  enabledModules  String            @default("{\"recaudadoras\":true,\"cuentasCorrientes\":true}")
+  isActive        Boolean           @default(true)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  accounts        Account[]
+  movements       AccountMovement[]
+  alerts          Alert[]
+  cashSessions    CashSession[]
+  currentAccounts CurrentAccount[]
+  notebooks       NotebookEntry[]
+  operations      Operation[]
+  recaudadoras    Recaudadora[]
+  usdStock        UsdStockEntry[]
+  users           User[]
+}
+
+model User {
+  id              String          @id @default(cuid())
+  name            String?
+  email           String          @unique
+  password        String
+  role            String          @default("ADMIN")
+  tenantId        String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  closedSessions  CashSession[]   @relation("ClosedBy")
+  cashSessions    CashSession[]   @relation("OpenedBy")
+  notebookEntries NotebookEntry[]
+  operations      Operation[]     @relation("CreatedBy")
+  tenant          Tenant?         @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+}
+
+model Account {
+  id             String            @id @default(cuid())
+  tenantId       String
+  name           String
+  currency       String
+  type           String
+  ownership      String            @default("PROPIO")
+  bank           String?
+  alias          String?
+  cbu            String?
+  pin            String?
+  notes          String?
+  isPurchasing   Boolean           @default(false)
+  username       String?
+  password       String?
+  initialBalance Float             @default(0)
+  isActive       Boolean           @default(true)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  tenant         Tenant            @relation(fields: [tenantId], references: [id])
+  movements      AccountMovement[]
+
+  @@index([tenantId])
+}
+
+model AccountMovement {
+  id          String     @id @default(cuid())
+  tenantId    String
+  accountId   String
+  currency    String
+  amount      Float
+  type        String
+  referenceId String?
+  description String?
+  createdAt   DateTime   @default(now())
+  operation   Operation? @relation(fields: [referenceId], references: [id])
+  account     Account    @relation(fields: [accountId], references: [id])
+  tenant      Tenant     @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@index([accountId])
+  @@index([referenceId])
+}
+
+model Operation {
+  id                  String            @id @default(cuid())
+  tenantId            String
+  type                String
+  status              String            @default("COMPLETED")
+  mainAmount          Float
+  mainCurrency        String
+  secondaryAmount     Float?
+  exchangeRate        Float?
+  cashAmount          Float?
+  transferAmount      Float?
+  createdById         String
+  cashSessionId       String?
+  notes               String?
+  category            String?
+  commissionAmount    Float?
+  commissionAccountId String?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  movements           AccountMovement[]
+  cashSession         CashSession?      @relation(fields: [cashSessionId], references: [id])
+  createdBy           User              @relation("CreatedBy", fields: [createdById], references: [id])
+  tenant              Tenant            @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@index([cashSessionId])
+  @@index([createdAt])
+  @@index([type])
+}
+
+model UsdStockEntry {
+  id          String   @id @default(cuid())
+  tenantId    String
+  amount      Float
+  rate        Float
+  remaining   Float
+  operationId String?
+  createdAt   DateTime @default(now())
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+}
+
+model CashSession {
+  id                 String      @id @default(cuid())
+  tenantId           String
+  status             String      @default("OPEN")
+  openedById         String
+  openedAt           DateTime    @default(now())
+  openingBalances    String?
+  closedById         String?
+  closedAt           DateTime?
+  expectedBalances   String?
+  actualBalances     String?
+  difference         String?
+  withdrawalsSummary String?
+  commissionsSummary String?
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+  closedBy           User?       @relation("ClosedBy", fields: [closedById], references: [id])
+  openedBy           User        @relation("OpenedBy", fields: [openedById], references: [id])
+  tenant             Tenant      @relation(fields: [tenantId], references: [id])
+  operations         Operation[]
+
+  @@index([tenantId])
+}
+
+model Recaudadora {
+  id               String                @id @default(cuid())
+  tenantId         String
+  clientName       String
+  commissionRate   Float
+  dailyAccumulated Float                 @default(0)
+  lastResetAt      DateTime              @default(now())
+  isActive         Boolean               @default(true)
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+  tenant           Tenant                @relation(fields: [tenantId], references: [id])
+  movements        RecaudadoraMovement[]
+
+  @@index([tenantId])
+}
+
+model RecaudadoraMovement {
+  id            String      @id @default(cuid())
+  recaudadoraId String
+  amount        Float
+  description   String?
+  createdAt     DateTime    @default(now())
+  recaudadora   Recaudadora @relation(fields: [recaudadoraId], references: [id])
+
+  @@index([recaudadoraId])
+}
+
+model CurrentAccount {
+  id         String                   @id @default(cuid())
+  tenantId   String
+  name       String
+  phone      String?
+  notes      String?
+  balanceARS Float                    @default(0)
+  balanceUSD Float                    @default(0)
+  isActive   Boolean                  @default(true)
+  createdAt  DateTime                 @default(now())
+  updatedAt  DateTime                 @updatedAt
+  tenant     Tenant                   @relation(fields: [tenantId], references: [id])
+  movements  CurrentAccountMovement[]
+
+  @@index([tenantId])
+}
+
+model CurrentAccountMovement {
+  id               String         @id @default(cuid())
+  currentAccountId String
+  type             String
+  amount           Float
+  currency         String         @default("ARS")
+  balanceAfterARS  Float?
+  balanceAfterUSD  Float?
+  description      String?
+  operationId      String?
+  createdAt        DateTime       @default(now())
+  currentAccount   CurrentAccount @relation(fields: [currentAccountId], references: [id])
+
+  @@index([currentAccountId])
+}
+
+model NotebookEntry {
+  id              String   @id @default(cuid())
+  tenantId        String
+  content         String
+  isProcessed     Boolean  @default(false)
+  processedAsOpId String?
+  createdById     String
+  createdAt       DateTime @default(now())
+  createdBy       User     @relation(fields: [createdById], references: [id])
+  tenant          Tenant   @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@index([isProcessed])
+}
+
+model Alert {
+  id         String    @id @default(cuid())
+  tenantId   String
+  type       String
+  severity   String
+  message    String
+  metadata   String?
+  status     String    @default("ACTIVE")
+  resolvedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  tenant     Tenant    @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@index([status])
+}
