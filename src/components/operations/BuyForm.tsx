@@ -12,7 +12,7 @@ interface Account {
     type: string;
     ownership: string;
     balance: number;
-    isPurchasing: boolean;
+    isPurchasing?: boolean;
 }
 
 interface BuyFormProps {
@@ -26,7 +26,7 @@ export function BuyForm({ accounts, currentAccounts, onSuccess }: BuyFormProps) 
     const usdAccounts = accounts.filter(a => a.currency === 'USD' && a.ownership === 'PROPIO');
 
     // Filter digital origins to only accounts marked as "isPurchasing"
-    const digitalArsAccounts = arsAccounts.filter(a => a.isPurchasing || a.type === 'CASH');
+    const digitalArsAccounts = arsAccounts.filter(a => a.isPurchasing === true || a.type === 'CASH');
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');

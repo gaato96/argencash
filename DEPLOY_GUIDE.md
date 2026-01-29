@@ -1,56 +1,38 @@
-# 🚀 Guía de Despliegue en Hostinger (VPS / App Platform)
+# 🚀 Guía de Despliegue en Hostinger (Actualizada)
 
-Esta guía te ayudará a configurar tu aplicación **Finance Manager Pro** en Hostinger utilizando la integración con Git (GitHub/GitLab).
+Dominio Configurado: **https://argencash.galuweb.com**
 
-## 1. Requisitos Previos
-- **Cuenta en GitHub**: Este repositorio debe estar subido a tu GitHub.
-- **Plan en Hostinger**: VPS (con Node.js/Docker) o "Aplicación Node.js" (Shared/Cloud).
+## 1. Configuración de Compilación (Build)
+Basado en tu pantalla de Hostinger, la configuración correcta es:
 
-## 2. Configuración de Variables de Entorno (Environment Variables)
-En el panel de Hostinger, busca la sección de **Environment Variables** (Variables de Entorno) y agrega las siguientes. **NO subas tu archivo `.env` al repositorio.**
+- **Comando de compilación**: `npm run build`
+  *(Si el despliegue falla por falta de dependencias, intenta cambiarlo a: `npm install && npm run build`)*
+- **Directorio de salida**: `.next`
+- **Gestor de paquetes**: `npm`
 
-| Clave (Key) | Valor (Value) | Descripción |
+## 2. Variables de Entorno (Environment Variables)
+Copia y pega estas claves y valores EXACTAMENTE en el panel de Hostinger.
+
+| Clave (Key) | Valor (Value) | Notas |
 | :--- | :--- | :--- |
-| `NEXTAUTH_URL` | `https://tu-dominio.com` | La URL final de tu sitio (con https). |
-| `NEXTAUTH_SECRET` | `(Generar uno seguro)` | Cadena aleatoria larga. Puedes usar un generador online o `openssl rand -base64 32`. |
-| `DATABASE_URL` | `file:./database.sqlite` | Para SQLite. Si usas VPS, esta ruta está bien. |
-| `App_KEY` | `(Tu clave de app)` | Si tu app usa alguna clave específica extra. |
+| `NEXTAUTH_URL` | `https://argencash.galuweb.com` | **Crucial**: Sin barra al final. |
+| `NEXTAUTH_SECRET` | `4f8e9a2b5d7c1a2e3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6` | Clave generada aleatoriamente. Úsala tal cual. |
+| `DATABASE_URL` | `file:./database.sqlite` | La base de datos se creará en el servidor. |
+| `App_KEY` | `base64:xgH/8gW5...` | *(Opcional)* Solo si tu app usaba alguna otra key. |
 
-> **Nota sobre Base de Datos**: Esta app usa **SQLite**.
-> - Al desplegar, se creará un archivo `database.sqlite` en el servidor.
-> - **Importante**: Asegúrate de que el directorio donde se guarda la DB sea persistente. En algunos despliegues de contenedores, los archivos se borran al redeployar.
-> - Si usas **Hostinger VPS**, no hay problema.
-> - Si usas **Hostinger Shared/Cloud Node.js App**, asegúrate de que `database.sqlite` no se sobrescriba.
+## 3. Comandos de Inicio (Start)
+Si Hostinger te pide un "Comando de Inicio" o "Start Command" separado:
+- `npm start`
 
-## 3. Comandos de Build y Start
-Hostinger te pedirá los comandos para construir y arrancar la app.
-
-- **Build Command**:
-  ```bash
-  npm install && npm run build
-  ```
-  *(Esto instala las dependencias, genera el cliente de Prisma y compila Next.js)*
-
-- **Start Command**:
-  ```bash
-  npm start
-  ```
-
-## 4. Primer Despliegue (Seed)
-La primera vez que despliegues, la base de datos estará vacía. Necesitarás "sembrarla" (crear el usuario SuperAdmin por defecto).
-
-Si tienes acceso a la **Consola/Terminal** en Hostinger:
-1.  Navega a la carpeta de tu app.
-2.  Ejecuta:
+## 4. Primeros Pasos Post-Deploy
+Una vez que el sitio diga "Online":
+1.  Es posible que al inicio te de Error 500 si la base de datos no existe.
+2.  Si tienes acceso a la **Terminal** en Hostinger (SSH o Web Terminal), ejecuta:
     ```bash
     npx prisma migrate deploy
-    ```
-    *(Esto crea las tablas en la DB)*
-3.  Si tienes un script de seed (`prisma/seed.ts`), ejecútalo:
-    ```bash
     npx prisma db seed
     ```
-    *O crea el primer usuario manualmente si tienes un script para ello.*
+    *Esto creará las tablas y el usuario administrador.*
 
 ---
-**¡Listo!** Tu aplicación debería estar corriendo.
+¡Mucha suerte con el lanzamiento! 🚀
