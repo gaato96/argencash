@@ -142,7 +142,7 @@ export default function LoginPage() {
 
                 {/* Footer */}
                 <div className="text-center text-slate-500 text-sm mt-6 space-y-1">
-                    <p>© 2026 ArgenCash SaaS</p>
+                    <p>© 2026 ArgenCash SaaS (v1.2 - Deploy Final)</p>
                     <p>
                         Desarrollado por{" "}
                         <a
