@@ -1,23 +1,15 @@
 import { PrismaClient } from '@prisma/client';
 
-// Use dynamic require to bypass Next.js 15 / Turbopack bundling issues with Prisma in production
-// but keep the type for better DX.
-const getPrismaClient = () => {
-    if (process.env.NODE_ENV === 'production') {
-        const { PrismaClient: PC } = require('@prisma/client');
-        return new PC();
-    }
+const prismaClientSingleton = () => {
     return new PrismaClient();
 };
 
-const globalForPrisma = globalThis as unknown as {
-    prisma: PrismaClient | undefined;
-};
+declare const globalThis: {
+    prismaGlobal: ReturnType<typeof prismaClientSingleton> | undefined;
+} & typeof global;
 
-export const prisma = globalForPrisma.prisma ?? getPrismaClient();
-
-if (process.env.NODE_ENV !== 'production') {
-    globalForPrisma.prisma = prisma;
-}
+const prisma = globalThis.prismaGlobal ?? prismaClientSingleton();
 
 export default prisma;
+
+if (process.env.NODE_ENV !== 'production') globalThis.prismaGlobal = prisma;
