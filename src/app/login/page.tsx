@@ -1,18 +1,22 @@
-'use client';
-
 import { signIn } from 'next-auth/react';
-import { useState, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
-function LoginContent() {
+export default function LoginPage() {
     const router = useRouter();
-    const searchParams = useSearchParams();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [callbackUrl, setCallbackUrl] = useState('/dashboard');
 
-    const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            const url = params.get('callbackUrl') || '/dashboard';
+            setCallbackUrl(url);
+        }
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -151,13 +155,5 @@ function LoginContent() {
                 </div>
             </div>
         </div>
-    );
-}
-
-export default function LoginPage() {
-    return (
-        <Suspense fallback={<div className="min-h-screen bg-slate-900 flex items-center justify-center text-white">Cargando...</div>}>
-            <LoginContent />
-        </Suspense>
     );
 }
