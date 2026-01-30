@@ -1,4 +1,4 @@
-import { UsdStockEntry } from '@prisma/client';
+import { UsdStockEntry } from '../../prisma/client';
 
 /**
  * Precio Promedio Ponderado (PPP)
