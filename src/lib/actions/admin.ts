@@ -64,7 +64,7 @@ export async function createTenant(data: {
     // 3. Create Tenant and Admin User transactionally
     const hashedPassword = await bcrypt.hash(data.adminPassword, 10);
 
-    return prisma.$transaction(async (tx) => {
+    return prisma.$transaction(async (tx: any) => {
         const tenant = await tx.tenant.create({
             data: {
                 name: data.name,
