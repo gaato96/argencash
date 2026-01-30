@@ -10,26 +10,49 @@ const log = (msg) => {
     const line = new Date().toISOString() + ' : ' + msg + '\n';
     try {
         fs.appendFileSync(logFilePath, line);
-    } catch (err) {
-        // Fallback to console if file write fails
-    }
+    } catch (err) { }
     process.stdout.write(line);
 };
 
-log('--- STARTING ArgenCash Server (v4) ---');
+log('--- STARTING ArgenCash Server (v5) ---');
 log('CWD: ' + process.cwd());
 log('__dirname: ' + __dirname);
 log('Node Version: ' + process.version);
-log('PORT from env: ' + process.env.PORT);
 
-// Log all env vars to see if there is a special Hostinger port
-log('All ENV keys: ' + Object.keys(process.env).join(', '));
+// ROBUST ENV LOADING
+try {
+    require('dotenv').config();
+    log('.env loaded via dotenv');
+} catch (e) {
+    log('dotenv not available, attempting manual .env load');
+    try {
+        const envPath = path.join(__dirname, '.env');
+        if (fs.existsSync(envPath)) {
+            const envContent = fs.readFileSync(envPath, 'utf8');
+            envContent.split('\n').forEach(line => {
+                const parts = line.split('=');
+                if (parts.length > 1) {
+                    const key = parts[0].trim();
+                    const value = parts.slice(1).join('=').trim().replace(/^["']|["']$/g, '');
+                    process.env[key] = value;
+                }
+            });
+            log('.env loaded manually');
+        } else {
+            log('.env file NOT FOUND at ' + envPath);
+        }
+    } catch (err) {
+        log('Error reading .env: ' + err.message);
+    }
+}
+
+log('DATABASE_URL present: ' + (!!process.env.DATABASE_URL));
+log('NEXTAUTH_SECRET present: ' + (!!process.env.NEXTAUTH_SECRET));
 
 const dev = false;
-const hostname = '0.0.0.0'; // Back to 0.0.0.0 to be sure
+const hostname = '0.0.0.0';
 const port = parseInt(process.env.PORT, 10) || 3000;
 
-log('Selected Hostname: ' + hostname);
 log('Selected Port: ' + port);
 
 const app = next({
@@ -44,13 +67,12 @@ app.prepare()
     .then(() => {
         log('Next.js app prepared. Creating server...');
         const server = createServer(async (req, res) => {
-            // THIS LOG IS CRITICAL: If we don't see this, the request is not reaching Node
             log('--- REQUEST RECEIVED: ' + req.method + ' ' + req.url + ' ---');
             try {
                 const parsedUrl = parse(req.url, true);
                 await handle(req, res, parsedUrl);
             } catch (err) {
-                log('ERROR handling request: ' + err.stack);
+                log('RUNTIME ERROR handling request: ' + err.stack);
                 res.statusCode = 500;
                 res.end('Internal Server Error');
             }
@@ -60,7 +82,7 @@ app.prepare()
             if (err) {
                 log('FAILED to listen: ' + err.stack);
             } else {
-                log('HTTP Server listening on ' + hostname + ':' + port);
+                log('HTTP Server listening on port ' + port);
             }
         });
     })
