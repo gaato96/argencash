@@ -17,7 +17,7 @@ const log = (msg) => {
     process.stdout.write(line);
 };
 
-log('--- STARTING ArgenCash Server (v8) ---');
+log('--- STARTING ArgenCash Server (v9) ---');
 log('CWD: ' + process.cwd());
 
 // ENV LOADING
