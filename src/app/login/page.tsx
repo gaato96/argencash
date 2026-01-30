@@ -125,26 +125,30 @@ function LoginContent() {
                         <div className="grid grid-cols-2 gap-2 text-xs">
                             <button
                                 type="button"
-                                onClick={() => { setEmail('leo@argencash.com'); setPassword('admin123'); }}
-                                className="px-3 py-2 rounded-lg bg-slate-700/30 text-slate-400 hover:bg-slate-700/50 hover:text-slate-300 transition-colors"
+                                onClick={() => { setEmail('superadmin@admin.com'); setPassword('admin'); }}
+                                className="px-3 py-2 rounded-lg bg-slate-700/30 text-slate-400 hover:bg-slate-700/50 hover:text-slate-300 transition-colors col-span-2"
                             >
-                                Leo (Admin)
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => { setEmail('super@argencash.com'); setPassword('admin123'); }}
-                                className="px-3 py-2 rounded-lg bg-slate-700/30 text-slate-400 hover:bg-slate-700/50 hover:text-slate-300 transition-colors"
-                            >
-                                SuperAdmin
+                                Acceso SuperAdmin (Initial)
                             </button>
                         </div>
                     </div>
                 </div>
 
                 {/* Footer */}
-                <p className="text-center text-slate-500 text-sm mt-6">
-                    © 2026 ArgenCash SaaS
-                </p>
+                <div className="text-center text-slate-500 text-sm mt-6 space-y-1">
+                    <p>© 2026 ArgenCash SaaS</p>
+                    <p>
+                        Desarrollado por{" "}
+                        <a
+                            href="https://galuweb.com"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-emerald-500 hover:text-emerald-400 font-medium transition-colors"
+                        >
+                            Gaston Gutierrez - Galu Diseño web
+                        </a>
+                    </p>
+                </div>
             </div>
         </div>
     );
