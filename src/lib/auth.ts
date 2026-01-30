@@ -2,6 +2,16 @@ import type { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import prisma from './prisma';
+import fs from 'fs';
+import path from 'path';
+
+const debugLog = (msg: string) => {
+    const line = new Date().toISOString() + ' : [AUTH] ' + msg + '\n';
+    try {
+        fs.appendFileSync(path.join(process.cwd(), 'debug.log'), line);
+    } catch (e) { }
+    console.log(line);
+};
 
 declare module 'next-auth' {
     interface Session {
@@ -43,37 +53,50 @@ export const authOptions: NextAuthOptions = {
                 password: { label: 'Password', type: 'password' },
             },
             async authorize(credentials) {
+                debugLog('Authorize starting for: ' + credentials?.email);
                 if (!credentials?.email || !credentials?.password) {
+                    debugLog('Missing credentials');
                     throw new Error('Email y contraseña son requeridos');
                 }
 
-                const user = await prisma.user.findUnique({
-                    where: { email: credentials.email },
-                    include: {
-                        tenant: {
-                            select: { enabledModules: true }
+                try {
+                    debugLog('Prisma query starting...');
+                    const user = await prisma.user.findUnique({
+                        where: { email: credentials.email },
+                        include: {
+                            tenant: {
+                                select: { enabledModules: true }
+                            }
                         }
+                    });
+
+                    if (!user) {
+                        debugLog('User not found: ' + credentials.email);
+                        throw new Error('Usuario no encontrado');
                     }
-                });
 
-                if (!user) {
-                    throw new Error('Usuario no encontrado');
+                    debugLog('User found, checking password...');
+                    const isValid = await bcrypt.compare(credentials.password, user.password);
+
+                    if (!isValid) {
+                        debugLog('Invalid password for: ' + credentials.email);
+                        throw new Error('Contraseña incorrecta');
+                    }
+
+                    debugLog('Login successful for: ' + user.email);
+                    return {
+                        id: user.id,
+                        email: user.email,
+                        name: user.name || user.email,
+                        role: user.role as 'SUPERADMIN' | 'ADMIN',
+                        tenantId: user.tenantId,
+                        enabledModules: user.tenant?.enabledModules
+                    };
+                } catch (err: any) {
+                    debugLog('AUTH ERROR: ' + err.message);
+                    if (err.stack) debugLog('STACK: ' + err.stack);
+                    throw err;
                 }
-
-                const isValid = await bcrypt.compare(credentials.password, user.password);
-
-                if (!isValid) {
-                    throw new Error('Contraseña incorrecta');
-                }
-
-                return {
-                    id: user.id,
-                    email: user.email,
-                    name: user.name || user.email,
-                    role: user.role as 'SUPERADMIN' | 'ADMIN',
-                    tenantId: user.tenantId,
-                    enabledModules: user.tenant?.enabledModules
-                };
             },
         }),
     ],
