@@ -30,7 +30,7 @@ export default async function AdminTenantsPage() {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-700">
-                        {tenants.map((tenant) => (
+                        {tenants.map((tenant: any) => (
                             <tr key={tenant.id} className="hover:bg-slate-700/50 transition-colors">
                                 <td className="px-6 py-4 text-white font-medium">{tenant.name}</td>
                                 <td className="px-6 py-4 font-mono text-xs">{tenant.slug}</td>
