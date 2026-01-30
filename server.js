@@ -14,20 +14,21 @@ const log = (msg) => {
     process.stdout.write(line);
 };
 
-log('--- STARTING ArgenCash Server (v5) ---');
+log('--- STARTING ArgenCash Server (v6) ---');
 log('CWD: ' + process.cwd());
 log('__dirname: ' + __dirname);
-log('Node Version: ' + process.version);
 
-// ROBUST ENV LOADING
-try {
-    require('dotenv').config();
-    log('.env loaded via dotenv');
-} catch (e) {
-    log('dotenv not available, attempting manual .env load');
-    try {
-        const envPath = path.join(__dirname, '.env');
-        if (fs.existsSync(envPath)) {
+// MULTI-PATH ENV LOADING
+const envPaths = [
+    path.join(__dirname, '.env'), // Standard
+    path.join(__dirname, '..', '.env'), // Persistent parent
+    path.join(__dirname, '.builds', 'config', '.env') // Hostinger HPanel path
+];
+
+envPaths.forEach(envPath => {
+    if (fs.existsSync(envPath)) {
+        log('Attempting to load env from: ' + envPath);
+        try {
             const envContent = fs.readFileSync(envPath, 'utf8');
             envContent.split('\n').forEach(line => {
                 const parts = line.split('=');
@@ -37,13 +38,16 @@ try {
                     process.env[key] = value;
                 }
             });
-            log('.env loaded manually');
-        } else {
-            log('.env file NOT FOUND at ' + envPath);
+            log('Loaded keys from ' + envPath);
+        } catch (err) {
+            log('Failed to read env from ' + envPath + ': ' + err.message);
         }
-    } catch (err) {
-        log('Error reading .env: ' + err.message);
     }
+});
+
+// Priority Fix: Hostinger sometimes names it DATABASE_URL2 in secret paths
+if (process.env.DATABASE_URL2 && !process.env.DATABASE_URL) {
+    process.env.DATABASE_URL = process.env.DATABASE_URL2;
 }
 
 log('DATABASE_URL present: ' + (!!process.env.DATABASE_URL));

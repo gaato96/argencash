@@ -1,0 +1,9 @@
+PassengerAppRoot /home/u601586354/domains/argencash.galuweb.com/public_html
+PassengerAppType node
+PassengerNodejs /opt/alt/alt-nodejs20/root/bin/node
+PassengerStartupFile server.js
+PassengerBaseURI /
+PassengerAppEnv production
+
+# FIX FOR LIBNODE.SO.108
+SetEnv LD_LIBRARY_PATH /opt/alt/alt-nodejs20/root/usr/lib64
