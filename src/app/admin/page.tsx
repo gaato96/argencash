@@ -14,7 +14,7 @@ export default async function AdminDashboardPage() {
     // Estimated MRR (Basic 20, Pro 50 - Example)
     // This assumes we add logic for plans later
     const tenants = await prisma.tenant.findMany({ select: { plan: true } });
-    const estimatedMRR = tenants.reduce((acc, t) => {
+    const estimatedMRR = tenants.reduce((acc: number, t: any) => {
         if (t.plan === 'PRO') return acc + 50;
         if (t.plan === 'BASIC') return acc + 20;
         return acc;

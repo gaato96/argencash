@@ -1,11 +1,20 @@
-// Use dynamic require to bypass Next.js 15 / Turbopack bundling issues with Prisma in production
-const { PrismaClient } = require('@prisma/client');
+import { PrismaClient } from '@prisma/client';
 
-const globalForPrisma = globalThis as unknown as {
-    prisma: any; // Using any here to simplify dynamic require in TS
+// Use dynamic require to bypass Next.js 15 / Turbopack bundling issues with Prisma in production
+// but keep the type for better DX.
+const getPrismaClient = () => {
+    if (process.env.NODE_ENV === 'production') {
+        const { PrismaClient: PC } = require('@prisma/client');
+        return new PC();
+    }
+    return new PrismaClient();
 };
 
-export const prisma = globalForPrisma.prisma ?? new PrismaClient();
+const globalForPrisma = globalThis as unknown as {
+    prisma: PrismaClient | undefined;
+};
+
+export const prisma = globalForPrisma.prisma ?? getPrismaClient();
 
 if (process.env.NODE_ENV !== 'production') {
     globalForPrisma.prisma = prisma;
