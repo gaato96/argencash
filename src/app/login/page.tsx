@@ -127,12 +127,12 @@ export default function LoginPage() {
 
                     {/* Demo credentials */}
                     <div className="mt-6 pt-6 border-t border-slate-700/50">
-                        <p className="text-xs text-slate-500 text-center mb-3">Usuarios de prueba:</p>
-                        <div className="grid grid-cols-2 gap-2 text-xs">
+                        <p className="text-xs text-slate-500 text-center mb-3">Acceso inicial:</p>
+                        <div className="grid grid-cols-1 gap-2 text-xs">
                             <button
                                 type="button"
                                 onClick={() => { setEmail('superadmin@admin.com'); setPassword('admin'); }}
-                                className="px-3 py-2 rounded-lg bg-slate-700/30 text-slate-400 hover:bg-slate-700/50 hover:text-slate-300 transition-colors col-span-2"
+                                className="px-3 py-2 rounded-lg bg-slate-700/30 text-slate-400 hover:bg-slate-700/50 hover:text-slate-300 transition-colors"
                             >
                                 Acceso SuperAdmin (Initial)
                             </button>
@@ -142,7 +142,7 @@ export default function LoginPage() {
 
                 {/* Footer */}
                 <div className="text-center text-slate-500 text-sm mt-6 space-y-1">
-                    <p>© 2026 ArgenCash SaaS (v1.2 - Deploy Final)</p>
+                    <p>© 2026 ArgenCash SaaS (v1.3 - Force Sync)</p>
                     <p>
                         Desarrollado por{" "}
                         <a
