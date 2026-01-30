@@ -126,6 +126,17 @@ npm run build
 pm2 restart finance-manager
 ```
 
+## 9. Sincronización de Esquema (Fixing Mismatches)
+
+Si encuentras errores de "columna no existente" (ej: `isActive` en Tenant) tras una actualización, sincroniza el esquema directamente:
+
+```bash
+cd ~/domains/argencash.galuweb.com/public_html
+npx prisma db push
+# Si pide confirmación por posible pérdida de datos, asegúrate de tener backup y acepta si es necesario.
+pm2 restart finance-manager
+```
+
 ## Notas Importantes sobre SQLite
 Al usar SQLite (`finance.db`), el archivo de base de datos se guarda en el disco del servidor.
 - **Backups**: Configura un cronjob para copiar `finance.db` a una ubicación segura (ej. S3 o Google Drive) periódicamente.
