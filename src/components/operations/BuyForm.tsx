@@ -22,11 +22,11 @@ interface BuyFormProps {
 }
 
 export function BuyForm({ accounts, currentAccounts, onSuccess }: BuyFormProps) {
-    const arsAccounts = accounts.filter(a => a.currency === 'ARS' && a.ownership === 'PROPIO');
-    const usdAccounts = accounts.filter(a => a.currency === 'USD' && a.ownership === 'PROPIO');
+    const arsAccounts = accounts.filter((a: any) => a.currency === 'ARS' && a.ownership === 'PROPIO');
+    const usdAccounts = accounts.filter((a: any) => a.currency === 'USD' && a.ownership === 'PROPIO');
 
     // Filter digital origins to only accounts marked as "isPurchasing"
-    const digitalArsAccounts = arsAccounts.filter(a => a.isPurchasing === true || a.type === 'CASH');
+    const digitalArsAccounts = arsAccounts.filter((a: any) => a.isPurchasing === true || a.type === 'CASH');
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -35,8 +35,8 @@ export function BuyForm({ accounts, currentAccounts, onSuccess }: BuyFormProps) 
     const [formData, setFormData] = useState({
         usdAmount: '',
         exchangeRate: '',
-        arsAccountId: arsAccounts.find(a => a.type === 'CASH')?.id || arsAccounts[0]?.id || '',
-        usdAccountId: usdAccounts.find(a => a.type === 'VIRTUAL')?.id || usdAccounts[0]?.id || '',
+        arsAccountId: arsAccounts.find((a: any) => a.type === 'CASH')?.id || arsAccounts[0]?.id || '',
+        usdAccountId: usdAccounts.find((a: any) => a.type === 'VIRTUAL')?.id || usdAccounts[0]?.id || '',
         notes: '',
     });
 

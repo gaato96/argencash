@@ -90,7 +90,7 @@ export function NewUserForm({ tenants }: { tenants: any[] }) {
                         className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-purple-500 outline-none"
                     >
                         <option value="global">-- Sin Negocio (Global) --</option>
-                        {tenants.map(t => (
+                        {tenants.map((t: any) => (
                             <option key={t.id} value={t.id}>{t.name} ({t.slug})</option>
                         ))}
                     </select>

@@ -23,8 +23,8 @@ interface SellFormProps {
 type PaymentType = 'CASH' | 'TRANSFER' | 'HYBRID';
 
 export function SellForm({ accounts, onSuccess }: SellFormProps) {
-    const arsAccounts = accounts.filter(a => a.currency === 'ARS' && a.ownership === 'PROPIO');
-    const usdAccounts = accounts.filter(a => a.currency === 'USD' && a.ownership === 'PROPIO');
+    const arsAccounts = accounts.filter((a: any) => a.currency === 'ARS' && a.ownership === 'PROPIO');
+    const usdAccounts = accounts.filter((a: any) => a.currency === 'USD' && a.ownership === 'PROPIO');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [paymentType, setPaymentType] = useState<PaymentType>('CASH');
@@ -32,8 +32,8 @@ export function SellForm({ accounts, onSuccess }: SellFormProps) {
     const [formData, setFormData] = useState({
         usdAmount: '',
         exchangeRate: '',
-        usdAccountId: usdAccounts.find(a => a.type === 'CASH')?.id || '',
-        cashAccountId: arsAccounts.find(a => a.type === 'CASH')?.id || '',
+        usdAccountId: usdAccounts.find((a: any) => a.type === 'CASH')?.id || '',
+        cashAccountId: arsAccounts.find((a: any) => a.type === 'CASH')?.id || '',
         cashAmount: '',
         transferAccountId: '',
         transferAmount: '',
@@ -75,7 +75,7 @@ export function SellForm({ accounts, onSuccess }: SellFormProps) {
         }
     };
 
-    const bankAccounts = arsAccounts.filter(a => a.type === 'BANK' || a.type === 'VIRTUAL');
+    const bankAccounts = arsAccounts.filter((a: any) => a.type === 'BANK' || a.type === 'VIRTUAL');
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -174,7 +174,7 @@ export function SellForm({ accounts, onSuccess }: SellFormProps) {
             {(paymentType === 'CASH' || paymentType === 'HYBRID') && (
                 <SearchableAccountSelect
                     label="Cuenta efectivo (ARS)"
-                    accounts={arsAccounts.filter(a => a.type === 'CASH')}
+                    accounts={arsAccounts.filter((a: any) => a.type === 'CASH')}
                     value={formData.cashAccountId}
                     onValueChange={(val) => setFormData({ ...formData, cashAccountId: val })}
                     placeholder="Seleccionar cuenta de caja..."

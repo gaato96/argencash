@@ -35,7 +35,7 @@ export function TransferForm({ accounts, onSuccess, initialCurrency = 'ARS', ini
         notes: '',
     });
 
-    const filteredAccounts = accounts.filter(a => a.currency === currency);
+    const filteredAccounts = accounts.filter((a: any) => a.currency === currency);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -128,7 +128,7 @@ export function TransferForm({ accounts, onSuccess, initialCurrency = 'ARS', ini
             {/* To Account */}
             <SearchableAccountSelect
                 label="Cuenta destino"
-                accounts={filteredAccounts.filter(a => a.id !== formData.fromAccountId)}
+                accounts={filteredAccounts.filter((a: any) => a.id !== formData.fromAccountId)}
                 value={formData.toAccountId}
                 onValueChange={(val) => setFormData({ ...formData, toAccountId: val })}
                 placeholder="Seleccionar cuenta de destino..."

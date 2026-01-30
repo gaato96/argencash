@@ -106,11 +106,11 @@ export function RecaudadorasClient({ recaudadoras, accounts }: RecaudadorasClien
     };
 
     const handleParseDeposits = () => {
-        const lines = depositForm.rawInput.split(/[\n+]+/).map(l => l.trim()).filter(l => l !== '');
-        const newDeposits = lines.map(l => {
+        const lines = depositForm.rawInput.split(/[\n+]+/).map((l: any) => l.trim()).filter((l: any) => l !== '');
+        const newDeposits = lines.map((l: any) => {
             const amount = parseFloat(l.replace(/,/g, ''));
             return isNaN(amount) ? null : { amount, confirmed: false };
-        }).filter(d => d !== null) as Array<{ amount: number; confirmed: boolean }>;
+        }).filter((d: any) => d !== null) as Array<{ amount: number; confirmed: boolean }>;
 
         setParsedDeposits([...parsedDeposits, ...newDeposits]);
         setDepositForm({ ...depositForm, rawInput: '' });
@@ -119,7 +119,7 @@ export function RecaudadorasClient({ recaudadoras, accounts }: RecaudadorasClien
     const handleDeposit = async () => {
         if (!selectedRecaudadora) return;
 
-        const depositsToSubmit = parsedDeposits.filter(d => d.confirmed);
+        const depositsToSubmit = parsedDeposits.filter((d: any) => d.confirmed);
         if (depositsToSubmit.length === 0) {
             setError('No hay depósitos confirmados para registrar');
             return;
@@ -131,7 +131,7 @@ export function RecaudadorasClient({ recaudadoras, accounts }: RecaudadorasClien
         try {
             await recordRecaudadoraDeposit({
                 recaudadoraId: selectedRecaudadora.id,
-                deposits: depositsToSubmit.map(d => ({
+                deposits: depositsToSubmit.map((d: any) => ({
                     amount: d.amount,
                     description: depositForm.description || undefined
                 })),
@@ -148,8 +148,8 @@ export function RecaudadorasClient({ recaudadoras, accounts }: RecaudadorasClien
         }
     };
 
-    const propioAccounts = accounts.filter(a => a.ownership === 'PROPIO');
-    const totalAccumulated = recaudadoras.reduce((sum, r) => sum + r.dailyAccumulated, 0);
+    const propioAccounts = accounts.filter((a: any) => a.ownership === 'PROPIO');
+    const totalAccumulated = recaudadoras.reduce((sum: number, r: any) => sum + r.dailyAccumulated, 0);
 
     return (
         <div className="space-y-6">
@@ -186,7 +186,7 @@ export function RecaudadorasClient({ recaudadoras, accounts }: RecaudadorasClien
                 </div>
             ) : (
                 <div className="grid gap-4">
-                    {recaudadoras.map((rec) => (
+                    {recaudadoras.map((rec: any) => (
                         <div
                             key={rec.id}
                             className="p-6 rounded-xl bg-slate-800/50 border border-slate-700/50 hover:border-slate-600/50 transition-colors"
@@ -332,7 +332,7 @@ export function RecaudadorasClient({ recaudadoras, accounts }: RecaudadorasClien
                                     required
                                 >
                                     <option value="">Seleccionar cuenta propia</option>
-                                    {propioAccounts.filter(a => a.currency === 'ARS').map((account) => (
+                                    {propioAccounts.filter((a: any) => a.currency === 'ARS').map((account: any) => (
                                         <option key={account.id} value={account.id}>
                                             {account.name} ({formatARS(account.balance)})
                                         </option>
@@ -393,7 +393,7 @@ export function RecaudadorasClient({ recaudadoras, accounts }: RecaudadorasClien
                                             className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white text-sm"
                                         >
                                             <option value="">Solo registro virtual</option>
-                                            {propioAccounts.filter(a => a.currency === 'ARS').map((account) => (
+                                            {propioAccounts.filter((a: any) => a.currency === 'ARS').map((account: any) => (
                                                 <option key={account.id} value={account.id}>{account.name}</option>
                                             ))}
                                         </select>
@@ -435,7 +435,7 @@ export function RecaudadorasClient({ recaudadoras, accounts }: RecaudadorasClien
                                                             className="w-4 h-4 rounded-md bg-slate-900 border-slate-700 text-emerald-500 focus:ring-emerald-500/20"
                                                         />
                                                         <button
-                                                            onClick={() => setParsedDeposits(parsedDeposits.filter((_, idx) => idx !== i))}
+                                                            onClick={() => setParsedDeposits(parsedDeposits.filter((_: any, idx: number) => idx !== i))}
                                                             className="p-1 rounded-md hover:bg-red-500/10 text-slate-600 hover:text-red-400"
                                                         >
                                                             <X className="w-4 h-4" />
@@ -451,7 +451,7 @@ export function RecaudadorasClient({ recaudadoras, accounts }: RecaudadorasClien
                                             <div className="flex justify-between items-center mb-4 bg-emerald-500/5 p-3 rounded-xl border border-emerald-500/10">
                                                 <span className="text-sm text-emerald-400 font-medium">Neto Confirmado:</span>
                                                 <span className="text-xl font-bold text-emerald-400">
-                                                    {formatARS(parsedDeposits.filter(d => d.confirmed).reduce((s, d) => s + d.amount, 0))}
+                                                    {formatARS(parsedDeposits.filter((d: any) => d.confirmed).reduce((s: number, d: any) => s + d.amount, 0))}
                                                 </span>
                                             </div>
                                             <button

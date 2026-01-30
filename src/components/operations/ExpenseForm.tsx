@@ -34,7 +34,7 @@ export function ExpenseForm({ accounts, onSuccess }: ExpenseFormProps) {
 
     const categories = ['Comisiones', 'Alquileres', 'Comida', 'Sueldos', 'Servicios', 'Otros', 'Varios'];
 
-    const filteredAccounts = accounts.filter(a => a.currency === currency);
+    const filteredAccounts = accounts.filter((a: any) => a.currency === currency);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -123,7 +123,7 @@ export function ExpenseForm({ accounts, onSuccess }: ExpenseFormProps) {
                         onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                         className="w-full px-4 py-3 rounded-lg bg-slate-900 border border-slate-600 text-white focus:outline-none focus:ring-2 focus:ring-red-500/50"
                     >
-                        {categories.map(c => (
+                        {categories.map((c: any) => (
                             <option key={c} value={c}>{c}</option>
                         ))}
                     </select>

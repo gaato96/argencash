@@ -82,7 +82,7 @@ function CommissionPaymentRow({ accountId, accountName, accounts, onPay }: Commi
             <div>
                 <label className="text-xs text-slate-500 block mb-1">Cuenta de Origen (Pago)</label>
                 <SearchableAccountSelect
-                    accounts={accounts.filter(a => a.currency === 'ARS')} // Commissions are usually in ARS
+                    accounts={accounts.filter((a: any) => a.currency === 'ARS')} // Commissions are usually in ARS
                     value={sourceAccountId}
                     onValueChange={setSourceAccountId}
                     placeholder="Seleccionar cuenta..."
@@ -163,8 +163,8 @@ export function CajaClient({ activeCashSession, history, accounts }: CajaClientP
             const details = await getSessionClosureDetails(activeCashSession.id);
             setClosureData(details);
             // Pre-fill actual balances with current system balances as a starting point
-            const arsBalance = accounts.find(a => a.type === 'CASH' && a.currency === 'ARS')?.balance || 0;
-            const usdBalance = accounts.find(a => a.type === 'CASH' && a.currency === 'USD')?.balance || 0;
+            const arsBalance = accounts.find((a: any) => a.type === 'CASH' && a.currency === 'ARS')?.balance || 0;
+            const usdBalance = accounts.find((a: any) => a.type === 'CASH' && a.currency === 'USD')?.balance || 0;
             setActualBalances({
                 ARS: arsBalance.toString(),
                 USD: usdBalance.toString(),
@@ -210,7 +210,7 @@ export function CajaClient({ activeCashSession, history, accounts }: CajaClientP
                 amount: parseFloat(amount),
                 accountId: sourceAccountId, // The digital account paying the commission
                 currency: 'ARS',
-                description: `Comisión cierre caja (Cuenta ${accounts.find(a => a.id === accountId)?.name})`,
+                description: `Comisión cierre caja (Cuenta ${accounts.find((a: any) => a.id === accountId)?.name})`,
             });
             setPaidCommissions(prev => ({ ...prev, [accountId]: true }));
         } catch (err) {
@@ -273,13 +273,13 @@ export function CajaClient({ activeCashSession, history, accounts }: CajaClientP
                         <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
                             <p className="text-xs text-emerald-400">Saldo actual ARS</p>
                             <p className="text-lg font-bold text-emerald-400">
-                                {formatARS(accounts.find(a => a.currency === 'ARS' && a.type === 'CASH')?.balance || 0)}
+                                {formatARS(accounts.find((a: any) => a.currency === 'ARS' && a.type === 'CASH')?.balance || 0)}
                             </p>
                         </div>
                         <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
                             <p className="text-xs text-emerald-400">Saldo actual USD</p>
                             <p className="text-lg font-bold text-emerald-400">
-                                {formatUSD(accounts.find(a => a.currency === 'USD' && a.type === 'CASH')?.balance || 0)}
+                                {formatUSD(accounts.find((a: any) => a.currency === 'USD' && a.type === 'CASH')?.balance || 0)}
                             </p>
                         </div>
                     </div>
@@ -308,7 +308,7 @@ export function CajaClient({ activeCashSession, history, accounts }: CajaClientP
                     <p className="p-4 text-slate-400 text-center">No hay historial de cajas</p>
                 ) : (
                     <div className="divide-y divide-slate-700/50">
-                        {history.map((session) => {
+                        {history.map((session: any) => {
                             const diff = safeJsonParse(session.difference, { ARS: 0, USD: 0 });
                             const hasDiff = Math.abs(diff.ARS) > 0 || Math.abs(diff.USD) > 0;
 
@@ -374,7 +374,7 @@ export function CajaClient({ activeCashSession, history, accounts }: CajaClientP
                                     <p className="text-slate-500 text-lg">No hubo operaciones digitales ni retiros que requieran conciliación hoy.</p>
                                 </div>
                             ) : (
-                                closureData.map((data) => (
+                                closureData.map((data: any) => (
                                     <div key={data.accountId} className="bg-slate-800 rounded-2xl p-6 border border-slate-700 shadow-xl">
                                         <div className="flex justify-between items-start mb-6 border-b border-slate-700 pb-4">
                                             <div>
@@ -499,7 +499,7 @@ export function CajaClient({ activeCashSession, history, accounts }: CajaClientP
                                         <div>
                                             <div className="flex justify-between text-xs text-slate-400 mb-1">
                                                 <span>ARS Esperado:</span>
-                                                <span>{formatARS(accounts.find(a => a.currency === 'ARS' && a.type === 'CASH')?.balance || 0)}</span>
+                                                <span>{formatARS(accounts.find((a: any) => a.currency === 'ARS' && a.type === 'CASH')?.balance || 0)}</span>
                                             </div>
                                             <input
                                                 type="number"
@@ -513,7 +513,7 @@ export function CajaClient({ activeCashSession, history, accounts }: CajaClientP
                                         <div>
                                             <div className="flex justify-between text-xs text-slate-400 mb-1">
                                                 <span>USD Esperado:</span>
-                                                <span>{formatUSD(accounts.find(a => a.currency === 'USD' && a.type === 'CASH')?.balance || 0)}</span>
+                                                <span>{formatUSD(accounts.find((a: any) => a.currency === 'USD' && a.type === 'CASH')?.balance || 0)}</span>
                                             </div>
                                             <input
                                                 type="number"
@@ -527,8 +527,8 @@ export function CajaClient({ activeCashSession, history, accounts }: CajaClientP
                                     </div>
                                     {/* Physical Diff */}
                                     {(() => {
-                                        const expectedARS = accounts.find(a => a.currency === 'ARS' && a.type === 'CASH')?.balance || 0;
-                                        const expectedUSD = accounts.find(a => a.currency === 'USD' && a.type === 'CASH')?.balance || 0;
+                                        const expectedARS = accounts.find((a: any) => a.currency === 'ARS' && a.type === 'CASH')?.balance || 0;
+                                        const expectedUSD = accounts.find((a: any) => a.currency === 'USD' && a.type === 'CASH')?.balance || 0;
                                         const actualARS = parseFloat(actualBalances.ARS) || 0;
                                         const actualUSD = parseFloat(actualBalances.USD) || 0;
                                         const diffARS = actualARS - expectedARS;
@@ -560,13 +560,13 @@ export function CajaClient({ activeCashSession, history, accounts }: CajaClientP
                                         <div className="p-2 bg-slate-800 rounded border border-slate-700">
                                             <span className="text-slate-500 text-xs block">Total ARS Virtual</span>
                                             <span className="text-white font-mono">
-                                                {formatARS(accounts.filter(a => a.type !== 'CASH' && a.currency === 'ARS').reduce((sum, a) => sum + a.balance, 0))}
+                                                {formatARS(accounts.filter((a: any) => a.type !== 'CASH' && a.currency === 'ARS').reduce((sum: number, a: any) => sum + a.balance, 0))}
                                             </span>
                                         </div>
                                         <div className="p-2 bg-slate-800 rounded border border-slate-700">
                                             <span className="text-slate-500 text-xs block">Total USD Virtual</span>
                                             <span className="text-white font-mono">
-                                                {formatUSD(accounts.filter(a => a.type !== 'CASH' && a.currency === 'USD').reduce((sum, a) => sum + a.balance, 0))}
+                                                {formatUSD(accounts.filter((a: any) => a.type !== 'CASH' && a.currency === 'USD').reduce((sum: number, a: any) => sum + a.balance, 0))}
                                             </span>
                                         </div>
                                     </div>

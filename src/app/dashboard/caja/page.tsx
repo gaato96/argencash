@@ -21,7 +21,7 @@ export default async function CajaPage() {
     ]);
 
     // Get cash accounts for initial balances
-    const cashAccounts = accounts.filter(a => a.type === 'CASH');
+    const cashAccounts = accounts.filter((a: any) => a.type === 'CASH');
 
     return (
         <CajaClient

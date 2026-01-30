@@ -162,7 +162,7 @@ export function CuentasClient({ accounts }: CuentasClientProps) {
         reader.onload = async (event) => {
             const text = event.target?.result as string;
             const lines = text.split('\n');
-            const data = lines.slice(1).map(line => {
+            const data = lines.slice(1).map((line: any) => {
                 const parts = line.split(',');
                 return {
                     name: parts[0]?.trim(),
@@ -173,7 +173,7 @@ export function CuentasClient({ accounts }: CuentasClientProps) {
                     cbu: parts[5]?.trim(),
                     notes: parts[6]?.trim(),
                 };
-            }).filter(row => row.name);
+            }).filter((row: any) => row.name);
 
             try {
                 await importAccountsCSV(data);
@@ -186,7 +186,7 @@ export function CuentasClient({ accounts }: CuentasClientProps) {
         reader.readAsText(file);
     };
 
-    const filteredAllAccounts = accounts.filter(a => {
+    const filteredAllAccounts = accounts.filter((a: any) => {
         const matchesSearch = a.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             (a.bank && a.bank.toLowerCase().includes(searchTerm.toLowerCase())) ||
             (a.alias && a.alias.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -197,10 +197,10 @@ export function CuentasClient({ accounts }: CuentasClientProps) {
         return matchesSearch && matchesCurrency && matchesType;
     });
 
-    const totalARS = accounts.filter(a => a.currency === 'ARS').reduce((s, a) => s + a.balance, 0);
-    const totalUSD = accounts.filter(a => a.currency === 'USD').reduce((s, a) => s + a.balance, 0);
-    const cashARS = accounts.filter(a => a.type === 'CASH' && a.currency === 'ARS').reduce((s, a) => s + a.balance, 0);
-    const digitalARS = accounts.filter(a => a.type !== 'CASH' && a.currency === 'ARS').reduce((s, a) => s + a.balance, 0);
+    const totalARS = accounts.filter((a: any) => a.currency === 'ARS').reduce((s: number, a: any) => s + a.balance, 0);
+    const totalUSD = accounts.filter((a: any) => a.currency === 'USD').reduce((s: number, a: any) => s + a.balance, 0);
+    const cashARS = accounts.filter((a: any) => a.type === 'CASH' && a.currency === 'ARS').reduce((s: number, a: any) => s + a.balance, 0);
+    const digitalARS = accounts.filter((a: any) => a.type !== 'CASH' && a.currency === 'ARS').reduce((s: number, a: any) => s + a.balance, 0);
 
     const renderAccountList = (accountList: Account[], title: string, color: string) => (
         <div className={`rounded-xl bg-slate-800/50 border border-${color}-500/20 overflow-hidden`}>
@@ -214,7 +214,7 @@ export function CuentasClient({ accounts }: CuentasClientProps) {
                 <div className="divide-y divide-slate-700/50">
                     {[...accountList]
                         .sort((a, b) => b.balance - a.balance)
-                        .map((account) => {
+                        .map((account: any) => {
                             const Icon = typeIcons[account.type as keyof typeof typeIcons] || Wallet;
                             const formatFn = account.currency === 'USD' ? formatUSD : formatARS;
 
@@ -376,7 +376,7 @@ export function CuentasClient({ accounts }: CuentasClientProps) {
                 </div>
                 <div className="flex flex-wrap gap-2">
                     <div className="flex bg-slate-800/50 p-1 rounded-xl border border-slate-700">
-                        {['ALL', 'ARS', 'USD'].map((curr) => (
+                        {['ALL', 'ARS', 'USD'].map((curr: any) => (
                             <button
                                 key={curr}
                                 onClick={() => setCurrencyFilter(curr as any)}
@@ -390,7 +390,7 @@ export function CuentasClient({ accounts }: CuentasClientProps) {
                         ))}
                     </div>
                     <div className="flex bg-slate-800/50 p-1 rounded-xl border border-slate-700">
-                        {['ALL', 'CASH', 'VIRTUAL'].map((type) => (
+                        {['ALL', 'CASH', 'VIRTUAL'].map((type: any) => (
                             <button
                                 key={type}
                                 onClick={() => setTypeFilter(type as any)}

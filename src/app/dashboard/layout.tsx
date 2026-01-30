@@ -54,7 +54,7 @@ export default function DashboardLayout({
         };
 
     // Filter navigation
-    const navigation = allNavigation.filter(item => {
+    const navigation = allNavigation.filter((item: any) => {
         // Dashboard is always enabled if not explicitly disabled (or for cleanliness)
         if (item.module === 'dashboard') return true;
         // Check if module is enabled in JSON
@@ -99,7 +99,7 @@ export default function DashboardLayout({
 
                     {/* Navigation */}
                     <nav className="flex-1 px-4 py-2 space-y-1 overflow-y-auto">
-                        {navigation.map((item) => {
+                        {navigation.map((item: any) => {
                             const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
                             return (
                                 <Link

@@ -29,13 +29,13 @@ export function SearchableAccountSelect({
     const [searchTerm, setSearchTerm] = useState('');
 
     const selectedAccount = useMemo(() =>
-        accounts.find(a => a.id === value),
+        accounts.find((a: any) => a.id === value),
         [accounts, value]);
 
     const filteredAccounts = useMemo(() => {
         if (!searchTerm) return accounts;
         const term = searchTerm.toLowerCase();
-        return accounts.filter(a =>
+        return accounts.filter((a: any) =>
             a.name.toLowerCase().includes(term) ||
             (a.bank && a.bank.toLowerCase().includes(term))
         );

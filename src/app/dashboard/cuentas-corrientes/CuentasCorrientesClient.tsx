@@ -124,10 +124,10 @@ export function CuentasCorrientesClient({ accounts, physicalAccounts }: CuentasC
         }
     };
 
-    const totalAfavorARS = accounts.reduce((sum, acc) => acc.balanceARS > 0 ? sum + acc.balanceARS : sum, 0);
-    const totalEnContraARS = accounts.reduce((sum, acc) => acc.balanceARS < 0 ? sum + acc.balanceARS : sum, 0);
-    const totalAfavorUSD = accounts.reduce((sum, acc) => acc.balanceUSD > 0 ? sum + acc.balanceUSD : sum, 0);
-    const totalEnContraUSD = accounts.reduce((sum, acc) => acc.balanceUSD < 0 ? sum + acc.balanceUSD : sum, 0);
+    const totalAfavorARS = accounts.reduce((sum: number, acc: any) => acc.balanceARS > 0 ? sum + acc.balanceARS : sum, 0);
+    const totalEnContraARS = accounts.reduce((sum: number, acc: any) => acc.balanceARS < 0 ? sum + acc.balanceARS : sum, 0);
+    const totalAfavorUSD = accounts.reduce((sum: number, acc: any) => acc.balanceUSD > 0 ? sum + acc.balanceUSD : sum, 0);
+    const totalEnContraUSD = accounts.reduce((sum: number, acc: any) => acc.balanceUSD < 0 ? sum + acc.balanceUSD : sum, 0);
 
     return (
         <div className="space-y-6">
@@ -177,7 +177,7 @@ export function CuentasCorrientesClient({ accounts, physicalAccounts }: CuentasC
 
             {/* Accounts List */}
             <div className="grid gap-4">
-                {accounts.map(acc => (
+                {accounts.map((acc: any) => (
                     <div key={acc.id} className="p-6 rounded-xl bg-slate-800/50 border border-slate-700/50 hover:border-slate-600/50 transition-colors">
                         <div className="flex items-center justify-between mb-6">
                             <div className="flex items-center gap-4">
@@ -351,7 +351,7 @@ export function CuentasCorrientesClient({ accounts, physicalAccounts }: CuentasC
 
                             <SearchableAccountSelect
                                 label="Cuenta Física/Virtual (Afectada)"
-                                accounts={physicalAccounts.filter(acc => acc.currency === currency)}
+                                accounts={physicalAccounts.filter((acc: any) => acc.currency === currency)}
                                 value={selectedPhysicalAccountId}
                                 onValueChange={setSelectedPhysicalAccountId}
                                 placeholder="Seleccionar cuenta..."

@@ -23,11 +23,11 @@ interface WithdrawUSDFormProps {
 }
 
 export function WithdrawUSDForm({ accounts, currentAccounts, onSuccess, initialAccountId }: WithdrawUSDFormProps) {
-    const digitalAccounts = accounts.filter(a => a.currency === 'USD' && a.type === 'VIRTUAL' && a.ownership === 'PROPIO');
-    const cashAccounts = accounts.filter(a => a.currency === 'USD' && a.type === 'CASH' && a.ownership === 'PROPIO');
+    const digitalAccounts = accounts.filter((a: any) => a.currency === 'USD' && a.type === 'VIRTUAL' && a.ownership === 'PROPIO');
+    const cashAccounts = accounts.filter((a: any) => a.currency === 'USD' && a.type === 'CASH' && a.ownership === 'PROPIO');
 
     // Default to 'Caja Dolares' if it exists
-    const defaultToAccount = cashAccounts.find(a => a.name.toLowerCase().includes('caja dolares'))?.id || cashAccounts[0]?.id || '';
+    const defaultToAccount = cashAccounts.find((a: any) => a.name.toLowerCase().includes('caja dolares'))?.id || cashAccounts[0]?.id || '';
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
