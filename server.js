@@ -17,10 +17,16 @@ log('--- STARTING ArgenCash Server ---');
 log('CWD: ' + process.cwd());
 log('__dirname: ' + __dirname);
 log('Node Version: ' + process.version);
+log('process.env.PORT: ' + process.env.PORT);
+log('process.env.NODE_ENV: ' + process.env.NODE_ENV);
 
 const dev = false;
-const hostname = '0.0.0.0';
-const port = process.env.PORT || 3000;
+// Try 127.0.0.1 as some proxies prefer it over 0.0.0.0
+const hostname = '127.0.0.1';
+const port = parseInt(process.env.PORT, 10) || 3000;
+
+log('Configured Hostname: ' + hostname);
+log('Configured Port: ' + port);
 
 const app = next({
     dev,
@@ -33,7 +39,9 @@ const handle = app.getRequestHandler();
 app.prepare()
     .then(() => {
         log('Next.js app prepared. Starting HTTP server...');
-        createServer(async (req, res) => {
+        const server = createServer(async (req, res) => {
+            // Log every request to see if they reach us
+            log('Request received: ' + req.method + ' ' + req.url);
             try {
                 const parsedUrl = parse(req.url, true);
                 await handle(req, res, parsedUrl);
@@ -42,10 +50,15 @@ app.prepare()
                 res.statusCode = 500;
                 res.end('Internal Server Error');
             }
-        })
-            .listen(port, () => {
-                log('HTTP Server ready on port ' + port);
-            });
+        });
+
+        server.listen(port, hostname, (err) => {
+            if (err) {
+                log('FAILED to listen on port ' + port + ': ' + err.stack);
+            } else {
+                log('HTTP Server ready on ' + hostname + ':' + port);
+            }
+        });
     })
     .catch(err => {
         log('CRITICAL: Next.js app.prepare() failed: ' + err.stack);
