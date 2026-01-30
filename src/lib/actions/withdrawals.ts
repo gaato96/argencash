@@ -22,7 +22,7 @@ export async function createWithdrawal(data: {
     const session = await getSessionContext();
     const tenantId = session.user.tenantId!;
 
-    return prisma.$transaction(async (tx) => {
+    return prisma.$transaction(async (tx: any) => {
         // 1. Create Operation
         const operation = await tx.operation.create({
             data: {
