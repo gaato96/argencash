@@ -4,6 +4,9 @@ const next = require('next');
 const fs = require('fs');
 const path = require('path');
 
+// FORCE LD_LIBRARY_PATH
+process.env.LD_LIBRARY_PATH = '/opt/alt/alt-nodejs20/root/usr/lib64';
+
 // UNBUFFERED LOGGING TO FILE
 const logFilePath = path.join(__dirname, 'debug.log');
 const log = (msg) => {
@@ -14,20 +17,18 @@ const log = (msg) => {
     process.stdout.write(line);
 };
 
-log('--- STARTING ArgenCash Server (v6) ---');
+log('--- STARTING ArgenCash Server (v7) ---');
 log('CWD: ' + process.cwd());
-log('__dirname: ' + __dirname);
 
-// MULTI-PATH ENV LOADING
+// ENV LOADING
 const envPaths = [
-    path.join(__dirname, '.env'), // Standard
-    path.join(__dirname, '..', '.env'), // Persistent parent
-    path.join(__dirname, '.builds', 'config', '.env') // Hostinger HPanel path
+    path.join(__dirname, '.env'),
+    path.join(__dirname, '..', '.env'),
+    path.join(__dirname, '.builds', 'config', '.env')
 ];
 
 envPaths.forEach(envPath => {
     if (fs.existsSync(envPath)) {
-        log('Attempting to load env from: ' + envPath);
         try {
             const envContent = fs.readFileSync(envPath, 'utf8');
             envContent.split('\n').forEach(line => {
@@ -38,33 +39,40 @@ envPaths.forEach(envPath => {
                     process.env[key] = value;
                 }
             });
-            log('Loaded keys from ' + envPath);
+            log('Env loaded: ' + envPath);
         } catch (err) {
-            log('Failed to read env from ' + envPath + ': ' + err.message);
+            log('Env load error: ' + err.message);
         }
     }
 });
 
-// Priority Fix: Hostinger sometimes names it DATABASE_URL2 in secret paths
 if (process.env.DATABASE_URL2 && !process.env.DATABASE_URL) {
     process.env.DATABASE_URL = process.env.DATABASE_URL2;
 }
 
 log('DATABASE_URL present: ' + (!!process.env.DATABASE_URL));
-log('NEXTAUTH_SECRET present: ' + (!!process.env.NEXTAUTH_SECRET));
+
+// VERIFY DATABASE FILE
+if (process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith('file:')) {
+    const dbPath = process.env.DATABASE_URL.replace('file:', '');
+    if (fs.existsSync(dbPath)) {
+        log('DB File found at: ' + dbPath);
+        try {
+            fs.accessSync(dbPath, fs.constants.R_OK | fs.constants.W_OK);
+            log('DB File is READ/WRITE accessible');
+        } catch (e) {
+            log('DB File PERMISSION ERROR: ' + e.message);
+        }
+    } else {
+        log('DB File NOT FOUND at: ' + dbPath);
+    }
+}
 
 const dev = false;
 const hostname = '0.0.0.0';
 const port = parseInt(process.env.PORT, 10) || 3000;
 
-log('Selected Port: ' + port);
-
-const app = next({
-    dev,
-    hostname,
-    port,
-    dir: __dirname
-});
+const app = next({ dev, hostname, port, dir: __dirname });
 const handle = app.getRequestHandler();
 
 app.prepare()
@@ -76,7 +84,7 @@ app.prepare()
                 const parsedUrl = parse(req.url, true);
                 await handle(req, res, parsedUrl);
             } catch (err) {
-                log('RUNTIME ERROR handling request: ' + err.stack);
+                log('RUNTIME ERROR: ' + err.stack);
                 res.statusCode = 500;
                 res.end('Internal Server Error');
             }
@@ -91,7 +99,7 @@ app.prepare()
         });
     })
     .catch(err => {
-        log('CRITICAL ERROR on app.prepare(): ' + err.stack);
+        log('CRITICAL PREPARE ERROR: ' + err.stack);
         process.exit(1);
     });
 
