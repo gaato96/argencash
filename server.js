@@ -17,7 +17,7 @@ const log = (msg) => {
     process.stdout.write(line);
 };
 
-log('--- STARTING ArgenCash Server (v9) ---');
+log('--- STARTING ArgenCash Server (v10) ---');
 log('CWD: ' + process.cwd());
 
 // ENV LOADING
@@ -51,6 +51,8 @@ if (process.env.DATABASE_URL2 && !process.env.DATABASE_URL) {
 }
 
 log('DATABASE_URL present: ' + (!!process.env.DATABASE_URL));
+log('NEXTAUTH_SECRET present: ' + (!!process.env.NEXTAUTH_SECRET));
+log('NEXTAUTH_URL: ' + (process.env.NEXTAUTH_URL || 'NOT SET'));
 
 // VERIFY DATABASE FILE
 if (process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith('file:')) {

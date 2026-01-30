@@ -6,8 +6,8 @@ export default withAuth(
         const { token } = req.nextauth;
         const { pathname } = req.nextUrl;
 
-        // SuperAdmin routes - only SUPERADMIN can access
-        if (pathname.startsWith('/superadmin')) {
+        // Admin routes - only SUPERADMIN can access
+        if (pathname.startsWith('/admin')) {
             if (token?.role !== 'SUPERADMIN') {
                 return NextResponse.redirect(new URL('/dashboard', req.url));
             }
@@ -44,5 +44,5 @@ export default withAuth(
 );
 
 export const config = {
-    matcher: ['/dashboard/:path*', '/superadmin/:path*'],
+    matcher: ['/dashboard/:path*', '/admin/:path*'],
 };
