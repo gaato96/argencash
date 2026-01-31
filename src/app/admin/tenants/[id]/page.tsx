@@ -3,7 +3,8 @@ import { EditTenantForm } from './EditTenantForm';
 
 export default async function EditTenantPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
-    const tenant = await getTenant(id);
+    const tenantRaw = await getTenant(id);
+    const tenant = tenantRaw ? JSON.parse(JSON.stringify(tenantRaw)) : null;
 
     if (!tenant) {
         return <div className="text-white">Tenant no encontrado</div>;

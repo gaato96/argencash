@@ -65,7 +65,7 @@ export async function createTenant(data: {
     const hashedPassword = await bcrypt.hash(data.adminPassword, 10);
 
     return prisma.$transaction(async (tx: any) => {
-        const tenant = await tx.tenant.create({
+        const newTenant = await tx.tenant.create({
             data: {
                 name: data.name,
                 slug: data.slug,
@@ -81,12 +81,12 @@ export async function createTenant(data: {
                 name: data.adminName,
                 email: data.adminEmail,
                 password: hashedPassword,
-                role: 'ADMIN', // Standard admin for the tenant
-                tenantId: tenant.id,
+                role: 'ADMIN',
+                tenantId: newTenant.id,
             },
         });
 
-        return tenant;
+        return JSON.parse(JSON.stringify(newTenant));
     });
 }
 
@@ -126,9 +126,11 @@ export async function deleteTenant(tenantId: string) {
     // Let's rely on Prisma `onDelete: Cascade` in schema. If not present, this will fail and we'll fix it.
 
     // Deleting tenant
-    return prisma.tenant.delete({
+    // Deleting tenant
+    const deleted = await prisma.tenant.delete({
         where: { id: tenantId },
     });
+    return JSON.parse(JSON.stringify(deleted));
 }
 
 export async function getUser(userId: string) {
