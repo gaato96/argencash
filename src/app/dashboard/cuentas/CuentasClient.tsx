@@ -144,8 +144,8 @@ export function CuentasClient({ accounts }: CuentasClientProps) {
     };
 
     const handleDownloadSample = () => {
-        const headers = 'Nombre,Moneda,Tipo,Banco,Alias,CBU,Notas';
-        const sample = 'Caja Pesos,ARS,CASH,,,\nBanco Galicia USD,USD,VIRTUAL,Galicia,MI.ALIAS.USD,2222222222222222222222,Nota opcional';
+        const headers = 'Nombre,Moneda,Tipo,Banco,Alias,CBU,IsPurchasing,Username,Password,InitialBalance,Notas';
+        const sample = 'Caja Pesos,ARS,CASH,,,,false,,,0,Nota opcional\nBanco Galicia USD,USD,VIRTUAL,Galicia,MI.ALIAS.USD,2222222222222222222222,true,user123,pass123,100.50,Cuenta para compras';
         const blob = new Blob([`${headers}\n${sample}`], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -164,6 +164,7 @@ export function CuentasClient({ accounts }: CuentasClientProps) {
             const lines = text.split('\n');
             const data = lines.slice(1).map((line: any) => {
                 const parts = line.split(',');
+                if (parts.length < 2) return null;
                 return {
                     name: parts[0]?.trim(),
                     currency: parts[1]?.trim(),
@@ -171,9 +172,13 @@ export function CuentasClient({ accounts }: CuentasClientProps) {
                     bank: parts[3]?.trim(),
                     alias: parts[4]?.trim(),
                     cbu: parts[5]?.trim(),
-                    notes: parts[6]?.trim(),
+                    isPurchasing: parts[6]?.trim()?.toLowerCase() === 'true',
+                    username: parts[7]?.trim(),
+                    password: parts[8]?.trim(),
+                    initialBalance: parts[9]?.trim(),
+                    notes: parts[10]?.trim(),
                 };
-            }).filter((row: any) => row.name);
+            }).filter((row: any) => row && row.name);
 
             try {
                 await importAccountsCSV(data);

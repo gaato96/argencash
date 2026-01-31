@@ -353,27 +353,48 @@ export async function importAccountsCSV(accountsData: any[]) {
 
     if (!tenantId) throw new Error('No tenant context');
 
-    // Filter out invalid/empty rows and create many
-    const validAccounts = accountsData
-        .filter(a => a.name && a.currency)
-        .map(a => ({
-            tenantId,
-            name: a.name,
-            currency: a.currency.toUpperCase() === 'USD' ? 'USD' : 'ARS',
-            type: a.type?.toUpperCase() || 'VIRTUAL',
-            bank: a.bank || null,
-            alias: a.alias || null,
-            cbu: a.cbu || null,
-            notes: a.notes || null,
-            ownership: 'PROPIO',
-        }));
+    return prisma.$transaction(async (tx: any) => {
+        let count = 0;
+        for (const a of accountsData) {
+            if (!a.name || !a.currency) continue;
 
-    const result = await prisma.account.createMany({
-        data: validAccounts,
+            const initialBalance = parseFloat(a.initialBalance) || 0;
+            const account = await tx.account.create({
+                data: {
+                    tenantId,
+                    name: a.name,
+                    currency: a.currency.toUpperCase() === 'USD' ? 'USD' : 'ARS',
+                    type: a.type?.toUpperCase() || 'VIRTUAL',
+                    bank: a.bank || null,
+                    alias: a.alias || null,
+                    cbu: a.cbu || null,
+                    notes: a.notes || null,
+                    isPurchasing: a.isPurchasing || false,
+                    username: a.username || null,
+                    password: a.password || null,
+                    initialBalance: initialBalance,
+                    ownership: 'PROPIO',
+                },
+            });
+
+            if (initialBalance !== 0) {
+                await tx.accountMovement.create({
+                    data: {
+                        tenantId,
+                        accountId: account.id,
+                        currency: account.currency,
+                        amount: initialBalance,
+                        type: 'ADJUSTMENT',
+                        description: 'Saldo inicial (Importación CSV)',
+                    },
+                });
+            }
+            count++;
+        }
+
+        revalidatePath('/dashboard/cuentas');
+        return { count };
     });
-
-    revalidatePath('/dashboard/cuentas');
-    return result;
 }
 
 // ═══════════════════════════════════════════════════════════════
