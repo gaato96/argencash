@@ -69,6 +69,7 @@ const operationTypeLabels: Record<string, { label: string; icon: typeof ArrowDow
     TRANSFERENCIA: { label: 'Transferencia', icon: ArrowLeftRight, color: 'text-purple-400' },
     GASTO: { label: 'Gasto', icon: Receipt, color: 'text-red-400' },
     RETIRO: { label: 'Retiro', icon: ArrowUpRight, color: 'text-amber-400' },
+    GASTO_COMISION: { label: 'Gasto por Comisión', icon: Receipt, color: 'text-red-400' },
     INGRESO_COMISION: { label: 'Comisión', icon: ArrowDownLeft, color: 'text-green-400' },
 };
 
@@ -110,7 +111,19 @@ export function OperationsClient({ operations, accounts, currentAccounts, initia
     }, []);
 
     const filteredOperations = operations.filter((op) => {
-        const typeMatch = filter === 'all' || op.type === filter;
+        let typeMatch = false;
+        if (filter === 'all') {
+            typeMatch = true;
+        } else if (filter === 'COMPRA_USD') {
+            typeMatch = op.type.startsWith('COMPRA');
+        } else if (filter === 'VENTA_USD') {
+            typeMatch = op.type.startsWith('VENTA');
+        } else if (filter === 'GASTO') {
+            typeMatch = op.type === 'GASTO' || op.type === 'GASTO_COMISION';
+        } else {
+            typeMatch = op.type === filter;
+        }
+
         const accountMatch = !selectedAccountFilter || op.movements.some(m => m.account.id === selectedAccountFilter);
         return typeMatch && accountMatch;
     });
