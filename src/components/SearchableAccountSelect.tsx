@@ -1,13 +1,15 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Search, X, Check } from 'lucide-react';
+import { Search, X, Check, Wallet } from 'lucide-react';
+import { formatARS, formatUSD } from '@/lib/utils';
 
 interface Account {
     id: string;
     name: string;
     currency: string;
     bank?: string | null;
+    balance?: number;
 }
 
 interface SearchableAccountSelectProps {
@@ -49,9 +51,17 @@ export function SearchableAccountSelect({
                 onClick={() => setIsOpen(!isOpen)}
                 className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white cursor-pointer flex items-center justify-between hover:border-slate-600 transition-colors"
             >
-                <span className={selectedAccount ? "text-white" : "text-slate-500"}>
-                    {selectedAccount ? `${selectedAccount.name} (${selectedAccount.currency})` : placeholder}
-                </span>
+                <div className="flex flex-col items-start">
+                    <span className={selectedAccount ? "text-white" : "text-slate-500"}>
+                        {selectedAccount ? `${selectedAccount.name} (${selectedAccount.currency})` : placeholder}
+                    </span>
+                    {selectedAccount && typeof selectedAccount.balance === 'number' && (
+                        <span className="text-[10px] font-medium text-emerald-400 flex items-center gap-1">
+                            <Wallet className="w-3 h-3" />
+                            Disponible: {selectedAccount.currency === 'USD' ? formatUSD(selectedAccount.balance) : formatARS(selectedAccount.balance)}
+                        </span>
+                    )}
+                </div>
                 <Search className="w-4 h-4 text-slate-500" />
             </div>
 
@@ -89,7 +99,14 @@ export function SearchableAccountSelect({
                                     >
                                         <div>
                                             <p className="text-sm font-medium text-white">{account.name}</p>
-                                            <p className="text-xs text-slate-400">{account.currency} {account.bank ? `- ${account.bank}` : ''}</p>
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-xs text-slate-400">{account.currency} {account.bank ? `- ${account.bank}` : ''}</p>
+                                                {typeof account.balance === 'number' && (
+                                                    <p className="text-[10px] text-emerald-500 font-mono">
+                                                        ({account.currency === 'USD' ? formatUSD(account.balance) : formatARS(account.balance)})
+                                                    </p>
+                                                )}
+                                            </div>
                                         </div>
                                         {value === account.id && <Check className="w-4 h-4 text-emerald-500" />}
                                     </div>
