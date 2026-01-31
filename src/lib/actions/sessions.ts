@@ -85,9 +85,9 @@ export async function openCashSession(data: {
         });
 
         // Update actual account balances (Caja Pesos and Caja Dólares)
-        // Find "Caja Pesos"
+        // Find ARS Cash Account
         const cajaPesos = await tx.account.findFirst({
-            where: { tenantId, name: 'Caja Pesos', type: 'CASH' },
+            where: { tenantId, type: 'CASH', currency: 'ARS' },
         });
         if (cajaPesos) {
             // Get current balance
@@ -112,16 +112,9 @@ export async function openCashSession(data: {
             }
         }
 
-        // Find "Caja Dólares" (Try both with and without accent)
+        // Find USD Cash Account
         const cajaUSD = await tx.account.findFirst({
-            where: {
-                tenantId,
-                type: 'CASH',
-                OR: [
-                    { name: 'Caja Dólares' },
-                    { name: 'Caja Dolares' }
-                ]
-            },
+            where: { tenantId, type: 'CASH', currency: 'USD' },
         });
         if (cajaUSD) {
             const currentBalance = await tx.accountMovement.aggregate({
