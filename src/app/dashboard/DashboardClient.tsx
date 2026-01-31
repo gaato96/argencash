@@ -31,6 +31,8 @@ import { TransferForm } from '@/components/operations/TransferForm';
 import { ExpenseForm } from '@/components/operations/ExpenseForm';
 import { WithdrawUSDForm } from '@/components/operations/WithdrawUSDForm';
 
+import { DolarWidget } from '@/components/DolarWidget';
+
 interface DashboardData {
     balances: {
         propio: { ARS: number; USD: number };
@@ -168,6 +170,9 @@ export function DashboardClient({ initialData }: { initialData: DashboardData })
                     </div>
                 )}
             </div>
+
+            {/* Price Ticker */}
+            <DolarWidget />
 
             {/* Cash Session Status / Apertura */}
             {enabledModules.caja && (

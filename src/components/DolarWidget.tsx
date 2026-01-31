@@ -1,130 +1,99 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { fetchDolarBlue, fetchDolarByType, formatUpdateTime } from '@/lib/dolar-api';
+import { RefreshCw, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { formatARS } from '@/lib/utils';
 
-interface DolarData {
-    blue: { compra: number; venta: number; fecha: string };
-    oficial: { compra: number; venta: number };
-    mep: { compra: number; venta: number };
+interface DolarValue {
+    compra: number;
+    venta: number;
+    casa: string;
+    nombre: string;
+    moneda: string;
+    fechaActualizacion: string;
 }
 
 export function DolarWidget() {
-    const [data, setData] = useState<DolarData | null>(null);
+    const [prices, setPrices] = useState<DolarValue[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(false);
+    const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+    const fetchPrices = async () => {
+        setLoading(true);
+        try {
+            const response = await fetch('https://dolarapi.com/v1/dolares');
+            const data = await response.json();
+            // We only care about Oficial, Blue, MEP, and maybe CCL
+            const filtered = data.filter((d: DolarValue) =>
+                ['oficial', 'blue', 'mep', 'contadoconliqui'].includes(d.casa)
+            );
+            setPrices(filtered);
+            setLastUpdated(new Date());
+        } catch (error) {
+            console.error('Error fetching dolar prices:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        async function fetchData() {
-            try {
-                const [blue, oficial, mep] = await Promise.all([
-                    fetchDolarBlue(),
-                    fetchDolarByType('oficial'),
-                    fetchDolarByType('bolsa'),
-                ]);
-
-                setData({
-                    blue: {
-                        compra: blue.compra,
-                        venta: blue.venta,
-                        fecha: blue.fechaActualizacion || '',
-                    },
-                    oficial: {
-                        compra: oficial?.compra || 0,
-                        venta: oficial?.venta || 0,
-                    },
-                    mep: {
-                        compra: mep?.compra || 0,
-                        venta: mep?.venta || 0,
-                    },
-                });
-                setError(false);
-            } catch {
-                setError(true);
-            } finally {
-                setLoading(false);
-            }
-        }
-
-        fetchData();
-        // Refresh every 5 minutes
-        const interval = setInterval(fetchData, 5 * 60 * 1000);
+        fetchPrices();
+        const interval = setInterval(fetchPrices, 1000 * 60 * 5); // Refrescar cada 5 min
         return () => clearInterval(interval);
     }, []);
 
-    if (loading) {
+    if (loading && prices.length === 0) {
         return (
-            <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50 animate-pulse">
-                <div className="h-4 bg-slate-700 rounded w-24 mb-3" />
-                <div className="space-y-2">
-                    <div className="h-6 bg-slate-700 rounded" />
-                    <div className="h-6 bg-slate-700 rounded" />
-                </div>
-            </div>
-        );
-    }
-
-    if (error || !data) {
-        return (
-            <div className="p-4 rounded-xl bg-slate-800/50 border border-red-500/30">
-                <p className="text-sm text-red-400">Error al cargar cotización</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 animate-pulse">
+                {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="h-20 bg-slate-800 rounded-xl" />
+                ))}
             </div>
         );
     }
 
     return (
-        <div className="p-4 rounded-xl bg-gradient-to-br from-slate-800/80 to-slate-900/80 border border-slate-700/50 backdrop-blur-sm">
-            <div className="flex items-center gap-2 mb-3">
-                <span className="text-lg">💱</span>
-                <h3 className="font-semibold text-white">Dólar Blue</h3>
-                <span className="ml-auto text-[10px] text-slate-500 px-2 py-0.5 rounded-full bg-slate-700/50">
-                    Referencia
-                </span>
+        <div className="space-y-2">
+            <div className="flex items-center justify-between px-1">
+                <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                    <TrendingUp className="w-3 h-3" />
+                    Cotizaciones en Tiempo Real
+                </div>
+                <button
+                    onClick={fetchPrices}
+                    disabled={loading}
+                    className="text-slate-500 hover:text-white transition-colors"
+                >
+                    <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
+                </button>
             </div>
 
-            {/* Blue Dollar - Main */}
-            <div className="grid grid-cols-2 gap-2 mb-3">
-                <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                    <p className="text-[10px] text-emerald-400 uppercase tracking-wide">Compra</p>
-                    <p className="text-lg font-bold text-emerald-400">{formatARS(data.blue.compra)}</p>
-                </div>
-                <div className="p-2 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                    <p className="text-[10px] text-blue-400 uppercase tracking-wide">Venta</p>
-                    <p className="text-lg font-bold text-blue-400">{formatARS(data.blue.venta)}</p>
-                </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {prices.map((price) => (
+                    <div key={price.casa} className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-3 hover:border-slate-600 transition-colors">
+                        <div className="flex justify-between items-start mb-1">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase">{price.nombre}</span>
+                            {/* Simple visual indicator, could be improved with historical data */}
+                            <Minus className="w-3 h-3 text-slate-600" />
+                        </div>
+                        <div className="flex flex-col">
+                            <div className="flex justify-between items-baseline">
+                                <span className="text-[10px] text-slate-500">Venta</span>
+                                <span className="text-lg font-bold text-emerald-400">{formatARS(price.venta)}</span>
+                            </div>
+                            <div className="flex justify-between items-baseline opacity-70">
+                                <span className="text-[10px] text-slate-500">Compra</span>
+                                <span className="text-xs font-medium text-slate-300">{formatARS(price.compra)}</span>
+                            </div>
+                        </div>
+                    </div>
+                ))}
             </div>
-
-            {/* Spread */}
-            <div className="flex items-center justify-between text-xs text-slate-400 mb-3 px-1">
-                <span>Spread:</span>
-                <span className="font-medium text-amber-400">
-                    {formatARS(data.blue.venta - data.blue.compra)}
-                </span>
-            </div>
-
-            {/* Divider */}
-            <div className="border-t border-slate-700/50 my-3" />
-
-            {/* Other rates */}
-            <div className="space-y-2 text-xs">
-                <div className="flex items-center justify-between text-slate-400">
-                    <span>Oficial</span>
-                    <span className="font-medium text-slate-300">{formatARS(data.oficial.venta)}</span>
-                </div>
-                <div className="flex items-center justify-between text-slate-400">
-                    <span>MEP</span>
-                    <span className="font-medium text-slate-300">{formatARS(data.mep.venta)}</span>
-                </div>
-            </div>
-
-            {/* Update time */}
-            <div className="mt-3 pt-2 border-t border-slate-700/30">
-                <p className="text-[10px] text-slate-500 flex items-center gap-1">
-                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    {formatUpdateTime(data.blue.fecha)}
+            {lastUpdated && (
+                <p className="text-[9px] text-slate-600 text-right italic">
+                    Última actualización: {lastUpdated.toLocaleTimeString()}
                 </p>
-            </div>
+            )}
         </div>
     );
 }
