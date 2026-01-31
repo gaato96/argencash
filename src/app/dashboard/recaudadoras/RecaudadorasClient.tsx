@@ -168,49 +168,49 @@ export function RecaudadorasClient({ recaudadoras, accounts }: RecaudadorasClien
             </div>
 
             {/* Summary */}
-            <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/20">
+            <div className="p-4 sm:p-5 rounded-xl bg-purple-500/10 border border-purple-500/20">
                 <div className="flex items-center justify-between">
                     <div>
-                        <p className="text-sm text-slate-400">Total acumulado hoy</p>
-                        <p className="text-2xl font-bold text-purple-400">{formatARS(totalAccumulated)}</p>
+                        <p className="text-xs sm:text-sm text-slate-400">Total acumulado hoy</p>
+                        <p className="text-xl sm:text-2xl font-bold text-purple-400 tabular-nums">{formatARS(totalAccumulated)}</p>
                     </div>
-                    <PiggyBank className="w-10 h-10 text-purple-400" />
+                    <PiggyBank className="w-8 h-8 sm:w-10 sm:h-10 text-purple-400 opacity-50 sm:opacity-100" />
                 </div>
             </div>
 
             {/* Recaudadoras list */}
             {recaudadoras.length === 0 ? (
                 <div className="p-8 rounded-xl bg-slate-800/50 border border-slate-700/50 text-center">
-                    <PiggyBank className="w-12 h-12 text-slate-500 mx-auto mb-4" />
-                    <p className="text-slate-400">No hay recaudadoras configuradas</p>
+                    <PiggyBank className="w-10 h-10 sm:w-12 sm:h-12 text-slate-500 mx-auto mb-4" />
+                    <p className="text-sm sm:text-base text-slate-400">No hay recaudadoras configuradas</p>
                 </div>
             ) : (
-                <div className="grid gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
                     {recaudadoras.map((rec: any) => (
                         <div
                             key={rec.id}
-                            className="p-6 rounded-xl bg-slate-800/50 border border-slate-700/50 hover:border-slate-600/50 transition-colors"
+                            className="p-4 sm:p-6 rounded-xl bg-slate-800/50 border border-slate-700/50 hover:border-slate-600/50 transition-colors"
                         >
                             <div className="flex items-center justify-between mb-4">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center">
-                                        <PiggyBank className="w-6 h-6 text-purple-400" />
+                                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-purple-500/20 flex items-center justify-center shrink-0">
+                                        <PiggyBank className="w-5 h-5 sm:w-6 sm:h-6 text-purple-400" />
                                     </div>
-                                    <div>
-                                        <h3 className="font-semibold text-white">{rec.clientName}</h3>
-                                        <p className="text-xs text-slate-400">
+                                    <div className="min-w-0">
+                                        <h3 className="font-semibold text-white text-sm sm:text-base truncate">{rec.clientName}</h3>
+                                        <p className="text-[10px] sm:text-xs text-slate-400">
                                             {(rec.commissionRate * 100).toFixed(1)}% comisión
                                         </p>
                                     </div>
                                 </div>
 
-                                <div className="text-right">
-                                    <p className="text-2xl font-bold text-purple-400">{formatARS(rec.dailyAccumulated)}</p>
-                                    <p className="text-xs text-slate-400 text-right">Acumulado</p>
+                                <div className="text-right shrink-0">
+                                    <p className="text-lg sm:text-2xl font-bold text-purple-400 tabular-nums">{formatARS(rec.dailyAccumulated)}</p>
+                                    <p className="text-[10px] text-slate-400">Hoy</p>
                                 </div>
                             </div>
 
-                            <div className="flex gap-2">
+                            <div className="flex flex-col sm:flex-row gap-2">
                                 <button
                                     onClick={() => {
                                         setSelectedRecaudadora(rec);
@@ -218,10 +218,10 @@ export function RecaudadorasClient({ recaudadoras, accounts }: RecaudadorasClien
                                         setParsedDeposits([]);
                                         setShowDepositModal(true);
                                     }}
-                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors"
+                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-xs sm:text-sm rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all active:scale-[0.98]"
                                 >
                                     <ArrowDownLeft className="w-4 h-4" />
-                                    Depósito (Masivo)
+                                    Cargar Depósitos
                                 </button>
                                 <button
                                     onClick={() => {
@@ -230,7 +230,7 @@ export function RecaudadorasClient({ recaudadoras, accounts }: RecaudadorasClien
                                         setShowLiquidateModal(true);
                                     }}
                                     disabled={rec.dailyAccumulated <= 0}
-                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-xs sm:text-sm rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <ArrowUpRight className="w-4 h-4" />
                                     Liquidar

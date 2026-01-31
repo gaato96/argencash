@@ -53,45 +53,36 @@ export function DolarWidget() {
     }
 
     return (
-        <div className="space-y-2">
+        <div className="space-y-3">
             <div className="flex items-center justify-between px-1">
                 <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                    <TrendingUp className="w-3 h-3" />
-                    Cotizaciones en Tiempo Real
+                    <TrendingUp className="w-3 h-3 text-emerald-500/50" />
+                    Mercado USD
                 </div>
                 <button
                     onClick={fetchPrices}
                     disabled={loading}
-                    className="text-slate-500 hover:text-white transition-colors"
+                    className="text-slate-500 hover:text-white transition-colors p-1 rounded-md hover:bg-slate-700/50"
                 >
-                    <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
+                    <RefreshCw className={`w-2.5 h-2.5 ${loading ? 'animate-spin' : ''}`} />
                 </button>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 gap-2">
                 {prices.map((price) => (
-                    <div key={price.casa} className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-3 hover:border-slate-600 transition-colors">
-                        <div className="flex justify-between items-start mb-1">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase">{price.nombre}</span>
-                            {/* Simple visual indicator, could be improved with historical data */}
-                            <Minus className="w-3 h-3 text-slate-600" />
-                        </div>
-                        <div className="flex flex-col">
-                            <div className="flex justify-between items-baseline">
-                                <span className="text-[10px] text-slate-500">Venta</span>
-                                <span className="text-lg font-bold text-emerald-400">{formatARS(price.venta)}</span>
-                            </div>
-                            <div className="flex justify-between items-baseline opacity-70">
-                                <span className="text-[10px] text-slate-500">Compra</span>
-                                <span className="text-xs font-medium text-slate-300">{formatARS(price.compra)}</span>
-                            </div>
+                    <div key={price.casa} className="bg-slate-900/40 border border-slate-700/30 rounded-lg p-2 hover:border-slate-600 transition-colors group">
+                        <div className="flex justify-between items-center">
+                            <span className="text-[10px] font-medium text-slate-400 uppercase tracking-tight">{price.nombre === 'Contado con Liqui' ? 'CCL' : price.nombre}</span>
+                            <span className="text-xs font-bold text-emerald-400/90 tabular-nums">
+                                {formatARS(price.venta).replace('$', '').trim()}
+                            </span>
                         </div>
                     </div>
                 ))}
             </div>
             {lastUpdated && (
-                <p className="text-[9px] text-slate-600 text-right italic">
-                    Última actualización: {lastUpdated.toLocaleTimeString()}
+                <p className="text-[8px] text-slate-600 text-right italic mr-1">
+                    {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </p>
             )}
         </div>

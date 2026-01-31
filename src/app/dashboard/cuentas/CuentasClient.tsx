@@ -324,22 +324,22 @@ export function CuentasClient({ accounts }: CuentasClientProps) {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-white">Cuentas</h1>
-                    <p className="text-slate-400">Gestión de cuentas y saldos</p>
+                    <h1 className="text-xl sm:text-2xl font-bold text-white">Cuentas</h1>
+                    <p className="text-xs sm:text-sm text-slate-400">Gestión de activos y saldos</p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2">
                     <button
                         onClick={handleDownloadSample}
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800 text-slate-300 text-sm hover:bg-slate-700 border border-slate-700 transition-colors"
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-slate-800 text-slate-300 text-xs hover:bg-slate-700 border border-slate-700 transition-colors"
                     >
                         <Download className="w-4 h-4" />
-                        Ejemplo CSV
+                        Ejemplo
                     </button>
-                    <label className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800 text-slate-300 text-sm hover:bg-slate-700 border border-slate-700 cursor-pointer transition-colors">
+                    <label className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-slate-800 text-slate-300 text-xs hover:bg-slate-700 border border-slate-700 cursor-pointer transition-colors">
                         <Upload className="w-4 h-4" />
-                        Importar CSV
+                        Importar
                         <input type="file" accept=".csv" onChange={handleImportCSV} className="hidden" />
                     </label>
                     <button
@@ -359,7 +359,7 @@ export function CuentasClient({ accounts }: CuentasClientProps) {
                             });
                             setShowCreateModal(true);
                         }}
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500 text-white font-medium hover:bg-emerald-600 transition-colors"
+                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-emerald-500 text-white font-medium hover:bg-emerald-600 transition-colors text-sm"
                     >
                         <Plus className="w-4 h-4" />
                         Nueva Cuenta
@@ -368,24 +368,24 @@ export function CuentasClient({ accounts }: CuentasClientProps) {
             </div>
 
             {/* Filters */}
-            <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex flex-col lg:flex-row gap-3">
                 <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                     <input
                         type="text"
-                        placeholder="Buscar por nombre, banco, alias..."
+                        placeholder="Buscar cuentas..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                        className="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-800/50 border border-slate-700 text-white placeholder-slate-500 text-sm focus:ring-2 focus:ring-emerald-500/50 outline-none"
                     />
                 </div>
-                <div className="flex flex-wrap gap-2">
-                    <div className="flex bg-slate-800/50 p-1 rounded-xl border border-slate-700">
+                <div className="flex overflow-x-auto pb-1 gap-2 no-scrollbar">
+                    <div className="flex shrink-0 bg-slate-800/50 p-1 rounded-xl border border-slate-700">
                         {['ALL', 'ARS', 'USD'].map((curr: any) => (
                             <button
                                 key={curr}
                                 onClick={() => setCurrencyFilter(curr as any)}
-                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${currencyFilter === curr
+                                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${currencyFilter === curr
                                     ? 'bg-emerald-500 text-white'
                                     : 'text-slate-400 hover:text-white'
                                     }`}
@@ -394,12 +394,12 @@ export function CuentasClient({ accounts }: CuentasClientProps) {
                             </button>
                         ))}
                     </div>
-                    <div className="flex bg-slate-800/50 p-1 rounded-xl border border-slate-700">
+                    <div className="flex shrink-0 bg-slate-800/50 p-1 rounded-xl border border-slate-700">
                         {['ALL', 'CASH', 'VIRTUAL'].map((type: any) => (
                             <button
                                 key={type}
                                 onClick={() => setTypeFilter(type as any)}
-                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${typeFilter === type
+                                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${typeFilter === type
                                     ? 'bg-blue-500 text-white'
                                     : 'text-slate-400 hover:text-white'
                                     }`}
@@ -412,22 +412,22 @@ export function CuentasClient({ accounts }: CuentasClientProps) {
             </div>
 
             {/* Summary */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-                    <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">Total ARS</p>
-                    <p className="text-xl font-bold text-emerald-400">{formatARS(totalARS)}</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+                <div className="p-3 sm:p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                    <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider mb-1">Total ARS</p>
+                    <p className="text-base sm:text-xl font-bold text-emerald-400 tabular-nums">{formatARS(totalARS)}</p>
                 </div>
-                <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-                    <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">Total USD</p>
-                    <p className="text-xl font-bold text-emerald-400">{formatUSD(totalUSD)}</p>
+                <div className="p-3 sm:p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                    <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider mb-1">Total USD</p>
+                    <p className="text-base sm:text-xl font-bold text-emerald-400 tabular-nums">{formatUSD(totalUSD)}</p>
                 </div>
-                <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
-                    <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">ARS Efectivo</p>
-                    <p className="text-xl font-bold text-blue-400">{formatARS(cashARS)}</p>
+                <div className="p-3 sm:p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                    <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider mb-1">Efectivo</p>
+                    <p className="text-base sm:text-xl font-bold text-blue-400 tabular-nums">{formatARS(cashARS)}</p>
                 </div>
-                <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/20">
-                    <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">ARS Virtual</p>
-                    <p className="text-xl font-bold text-purple-400">{formatARS(digitalARS)}</p>
+                <div className="p-3 sm:p-4 rounded-xl bg-purple-500/10 border border-purple-500/20">
+                    <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider mb-1">Virtual</p>
+                    <p className="text-base sm:text-xl font-bold text-purple-400 tabular-nums">{formatARS(digitalARS)}</p>
                 </div>
             </div>
 

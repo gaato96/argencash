@@ -157,10 +157,13 @@ export async function getDashboardData(tenantId: string) {
     const buys = todayOperations.filter((op: any) => op.type.startsWith('COMPRA') || (op.type === 'COLLECT_CC' && op.mainCurrency === 'USD'));
     const sales = todayOperations.filter((op: any) => op.type.startsWith('VENTA') || (op.type === 'REPAY_CC' && op.mainCurrency === 'USD'));
     const expenses = todayOperations.filter((op: any) => op.type === 'GASTO');
+    const ccProfitOps = todayOperations.filter((op: any) => op.type === 'COBRO_CC');
 
     // Totals for Profit Calculation
-    const totalSalesARS = sales.reduce((sum: number, op: any) => sum + (op.secondaryAmount || 0), 0);
-    const totalUsdSold = sales.reduce((sum: number, op: any) => sum + op.mainAmount, 0);
+    const totalSalesARS = sales.reduce((sum: number, op: any) => sum + (op.secondaryAmount || 0), 0) +
+        ccProfitOps.reduce((sum: number, op: any) => sum + (op.secondaryAmount || 0), 0);
+    const totalUsdSold = sales.reduce((sum: number, op: any) => sum + op.mainAmount, 0) +
+        ccProfitOps.reduce((sum: number, op: any) => sum + op.mainAmount, 0);
     const totalExpenses = expenses.reduce((sum: number, op: any) => sum + op.mainAmount, 0);
 
     // Get PPP for accurate profit

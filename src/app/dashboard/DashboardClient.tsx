@@ -31,8 +31,6 @@ import { TransferForm } from '@/components/operations/TransferForm';
 import { ExpenseForm } from '@/components/operations/ExpenseForm';
 import { WithdrawUSDForm } from '@/components/operations/WithdrawUSDForm';
 
-import { DolarWidget } from '@/components/DolarWidget';
-
 interface DashboardData {
     balances: {
         propio: { ARS: number; USD: number };
@@ -171,9 +169,6 @@ export function DashboardClient({ initialData }: { initialData: DashboardData })
                 )}
             </div>
 
-            {/* Price Ticker */}
-            <DolarWidget />
-
             {/* Cash Session Status / Apertura */}
             {enabledModules.caja && (
                 !activeCashSession ? (
@@ -276,79 +271,68 @@ export function DashboardClient({ initialData }: { initialData: DashboardData })
             </div>
 
             {/* Balances Grid */}
-            <div className={`grid grid-cols-1 ${showThirdPartyDetails ? 'lg:grid-cols-2' : ''} gap-6`}>
+            <div className={`grid grid-cols-1 ${showThirdPartyDetails ? 'md:grid-cols-2' : ''} gap-4 sm:gap-6`}>
                 {/* Patrimonio (Net Equity) */}
-                <div className="p-6 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700">
+                <div className="p-4 sm:p-6 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700">
                     <div className="flex justify-between items-start mb-4">
-                        <h2 className="text-sm font-medium text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                        <h2 className="text-xs sm:text-sm font-medium text-slate-400 uppercase tracking-wider flex items-center gap-2">
                             <Wallet className="w-4 h-4" />
-                            Patrimonio Neto Estimado
+                            Patrimonio Neto
                         </h2>
-                        <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/20">ACTIVO - PASIVO</span>
+                        <span className="text-[9px] sm:text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/20">ESTIMADO</span>
                     </div>
-                    <div className="space-y-4">
+                    <div className="space-y-3 sm:space-y-4">
                         <div className="flex justify-between items-baseline border-b border-slate-700/50 pb-2">
-                            <span className="text-2xl font-bold text-white">ARS</span>
-                            <span className="text-2xl font-mono text-emerald-400">
+                            <span className="text-xl sm:text-2xl font-bold text-white">ARS</span>
+                            <span className="text-xl sm:text-2xl font-mono text-emerald-400 tabular-nums">
                                 {formatARS((balances.propio.ARS || 0) - (balances.tercero.ARS || 0))}
                             </span>
                         </div>
                         <div className="flex justify-between items-baseline border-b border-slate-700/50 pb-2">
-                            <span className="text-2xl font-bold text-white">USD</span>
-                            <span className="text-2xl font-mono text-emerald-400">
+                            <span className="text-xl sm:text-2xl font-bold text-white">USD</span>
+                            <span className="text-xl sm:text-2xl font-mono text-emerald-400 tabular-nums">
                                 {formatUSD((balances.propio.USD || 0) - (balances.tercero.USD || 0))}
                             </span>
-                        </div>
-                    </div>
-                    <div className="mt-4 grid grid-cols-2 gap-2 text-[10px] text-slate-500 border-t border-slate-700/30 pt-4">
-                        <div>
-                            <p className="uppercase font-bold">Total Activos</p>
-                            <p className="text-xs text-slate-400 font-mono">{formatARS(balances.propio.ARS || 0)} ARS</p>
-                        </div>
-                        <div className="text-right">
-                            <p className="uppercase font-bold">Total Pasivos</p>
-                            <p className="text-xs text-red-400/70 font-mono">{formatARS(balances.tercero.ARS || 0)} ARS</p>
                         </div>
                     </div>
                 </div>
 
                 {/* Deuda con Terceros (Breakdown) */}
                 {showThirdPartyDetails && (
-                    <div className="p-6 rounded-2xl bg-slate-800/80 border border-slate-700">
+                    <div className="p-4 sm:p-6 rounded-2xl bg-slate-800/80 border border-slate-700">
                         <div className="flex justify-between items-start mb-4">
-                            <h2 className="text-sm font-medium text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                            <h2 className="text-xs sm:text-sm font-medium text-slate-400 uppercase tracking-wider flex items-center gap-2">
                                 <Users className="w-4 h-4" />
-                                Detalle de Terceros
+                                Pasivos
                             </h2>
-                            <span className="text-[10px] bg-red-500/10 text-red-400 px-2 py-0.5 rounded-full border border-red-500/20">PASIVO</span>
+                            <span className="text-[9px] sm:text-[10px] bg-red-500/10 text-red-400 px-2 py-0.5 rounded-full border border-red-500/20">A PAGAR</span>
                         </div>
-                        <div className="space-y-4">
+                        <div className="space-y-3 sm:space-y-4">
                             <div className="flex justify-between items-baseline border-b border-slate-700/50 pb-2">
-                                <span className="text-xl font-bold text-slate-300">ARS</span>
-                                <span className="text-xl font-mono text-red-400/80">{formatARS(balances.tercero.ARS || 0)}</span>
+                                <span className="text-lg sm:text-xl font-bold text-slate-300">ARS</span>
+                                <span className="text-lg sm:text-xl font-mono text-red-400/80 tabular-nums">{formatARS(balances.tercero.ARS || 0)}</span>
                             </div>
                             <div className="flex justify-between items-baseline border-b border-slate-700/50 pb-2">
-                                <span className="text-xl font-bold text-slate-300">USD</span>
-                                <span className="text-xl font-mono text-red-400/80">{formatUSD(balances.tercero.USD || 0)}</span>
+                                <span className="text-lg sm:text-xl font-bold text-slate-300">USD</span>
+                                <span className="text-lg sm:text-xl font-mono text-red-400/80 tabular-nums">{formatUSD(balances.tercero.USD || 0)}</span>
                             </div>
                         </div>
-                        <p className="text-[10px] text-slate-500 mt-2 italic text-center">Incluye Deuda en CC y Saldo Pendiente de Recaudadoras.</p>
                     </div>
                 )}
             </div>
 
             {/* Quick Metrics & Actions */}
-            <div className={`grid grid-cols-1 ${showCurrentAccountsCard ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-6`}>
+            <div className={`grid grid-cols-1 ${showCurrentAccountsCard ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4 sm:gap-6`}>
                 {/* Profit Card */}
-                <div className="p-5 rounded-xl bg-slate-800 border border-slate-700 flex flex-col justify-between">
+                <div className="p-4 sm:p-5 rounded-xl bg-slate-800 border border-slate-700 flex flex-col justify-between">
                     <div>
-                        <p className="text-sm text-slate-400 mb-1">Ganancia Real (Hoy)</p>
-                        <p className={`text-3xl font-bold ${todayProfit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                        <p className="text-xs sm:text-sm text-slate-400 mb-1">Ganancia Real (Hoy)</p>
+                        <p className={`text-2xl sm:text-3xl font-bold ${todayProfit >= 0 ? 'text-emerald-400' : 'text-red-400'} tabular-nums`}>
                             {formatARS(todayProfit)}
                         </p>
                     </div>
-                    <div className="mt-4 pt-4 border-t border-slate-700 flex justify-between items-center">
-                        <span className="text-xs text-slate-500">Incluye cotización & gastos</span>
+                    <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-slate-700 flex justify-between items-center">
+                        <span className="text-[10px] sm:text-xs text-slate-500 italic">Incluye cotización & gastos</span>
                         <TrendingUp className="w-4 h-4 text-emerald-500" />
                     </div>
                 </div>
@@ -357,24 +341,24 @@ export function DashboardClient({ initialData }: { initialData: DashboardData })
                 {showCurrentAccountsCard && (
                     <div
                         onClick={() => router.push('/dashboard/cuentas-corrientes')}
-                        className="p-5 rounded-xl bg-slate-800 border border-slate-700 flex flex-col justify-between cursor-pointer hover:border-slate-600 transition-colors"
+                        className="p-4 sm:p-5 rounded-xl bg-slate-800 border border-slate-700 flex flex-col justify-between cursor-pointer hover:border-slate-600 transition-all active:scale-[0.98]"
                     >
                         <div>
-                            <p className="text-sm text-slate-400 mb-2">Cuentas Corrientes (Neto)</p>
+                            <p className="text-xs sm:text-sm text-slate-400 mb-2">Cuentas Corrientes (Neto)</p>
                             <div className="space-y-1">
-                                <p className={`text-2xl font-bold ${currentAccountNet.ARS >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                <p className={`text-xl sm:text-2xl font-bold ${currentAccountNet.ARS >= 0 ? 'text-emerald-400' : 'text-red-400'} tabular-nums`}>
                                     {formatARS(currentAccountNet.ARS)}
                                 </p>
                                 {Math.abs(currentAccountNet.USD) > 0 && (
-                                    <p className={`text-lg font-bold ${currentAccountNet.USD >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                    <p className={`text-base sm:text-lg font-bold ${currentAccountNet.USD >= 0 ? 'text-emerald-400' : 'text-red-400'} tabular-nums`}>
                                         {formatUSD(currentAccountNet.USD)}
                                     </p>
                                 )}
                             </div>
                         </div>
-                        <div className="mt-4 pt-4 border-t border-slate-700 flex justify-between items-center">
-                            <span className="text-xs text-slate-500">
-                                {currentAccountNet.ARS >= 0 && currentAccountNet.USD >= 0 ? 'A favor global' : 'Saldo mixto/Contra'}
+                        <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-slate-700 flex justify-between items-center">
+                            <span className="text-[10px] sm:text-xs text-slate-500">
+                                {currentAccountNet.ARS >= 0 && currentAccountNet.USD >= 0 ? 'A favor global' : 'Saldo mixto'}
                             </span>
                             <ArrowUpRight className="w-4 h-4 text-emerald-500" />
                         </div>
@@ -382,41 +366,42 @@ export function DashboardClient({ initialData }: { initialData: DashboardData })
                 )}
 
                 {/* Quick Actions */}
-                <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 order-first md:order-last">
+                <div className="grid grid-cols-3 md:grid-cols-2 lg:grid-cols-3 gap-2 order-first md:order-last sm:mb-0 mb-4">
                     <button
                         onClick={() => setShowBuyModal(true)}
-                        className="flex flex-col items-center justify-center p-2 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20 transition-colors"
+                        className="flex flex-col items-center justify-center p-2 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20 transition-all active:scale-95"
                     >
                         <ArrowDownLeft className="w-5 h-5 mb-1" />
-                        <span className="text-xs font-semibold">Compra</span>
+                        <span className="text-[10px] sm:text-xs font-semibold">Compra</span>
                     </button>
                     <button
                         onClick={() => setShowSellModal(true)}
-                        className="flex flex-col items-center justify-center p-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 transition-colors"
+                        className="flex flex-col items-center justify-center p-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 transition-all active:scale-95"
                     >
                         <ArrowUpRight className="w-5 h-5 mb-1" />
-                        <span className="text-xs font-semibold">Venta</span>
+                        <span className="text-[10px] sm:text-xs font-semibold">Venta</span>
                     </button>
                     <button
                         onClick={() => setShowTransferModal(true)}
-                        className="flex flex-col items-center justify-center p-2 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border border-blue-500/20 transition-colors"
+                        className="flex flex-col items-center justify-center p-2 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border border-blue-500/20 transition-all active:scale-95"
                     >
                         <ArrowUpRight className="w-5 h-5 mb-1" />
-                        <span className="text-xs font-semibold">Transf.</span>
+                        <span className="text-[10px] sm:text-xs font-semibold">Transf.</span>
                     </button>
                     <button
                         onClick={() => setShowExpenseModal(true)}
-                        className="flex flex-col items-center justify-center p-2 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border border-amber-500/20 transition-colors"
+                        className="flex flex-col items-center justify-center p-2 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border border-amber-500/20 transition-all active:scale-95"
                     >
                         <ArrowDownLeft className="w-5 h-5 mb-1" />
-                        <span className="text-xs font-semibold">Gasto</span>
+                        <span className="text-[10px] sm:text-xs font-semibold">Gasto</span>
                     </button>
                     <button
                         onClick={() => setShowWithdrawUSDModal(true)}
-                        className="flex flex-col items-center justify-center p-2 rounded-lg bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 border border-purple-500/20 transition-colors col-span-2 lg:col-span-1"
+                        className="flex flex-col items-center justify-center p-2 rounded-lg bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 border border-purple-500/20 transition-all active:scale-95 col-span-2 md:col-span-1 lg:col-span-1"
                     >
                         <ArrowDownLeft className="w-5 h-5 mb-1" />
-                        <span className="text-xs font-semibold">Retiro USD</span>
+                        <span className="text-[10px] sm:text-xs font-semibold lg:block hidden">Retiro USD</span>
+                        <span className="text-[10px] sm:text-xs font-semibold lg:hidden">Retiro</span>
                     </button>
                 </div>
             </div>
@@ -424,19 +409,19 @@ export function DashboardClient({ initialData }: { initialData: DashboardData })
             {/* Alerts Section */}
             {alerts.length > 0 && (
                 <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-4">
-                    <h3 className="text-red-400 font-semibold mb-3 flex items-center gap-2">
+                    <h3 className="text-red-400 font-semibold mb-3 flex items-center gap-2 text-sm sm:text-base">
                         <AlertTriangle className="w-5 h-5" />
                         Alertas Activas
                     </h3>
                     <div className="space-y-2">
                         {alerts.map((alert: any) => (
                             <div key={alert.id} className="flex items-center justify-between p-3 rounded-lg bg-red-500/10 border border-red-500/10">
-                                <span className="text-sm text-red-200">{alert.message}</span>
+                                <span className="text-xs sm:text-sm text-red-200 line-clamp-2">{alert.message}</span>
                                 <button
                                     onClick={() => handleResolveAlert(alert.id)}
-                                    className="text-xs px-2 py-1 rounded bg-red-500/20 text-red-300 hover:bg-red-500/30 transition-colors"
+                                    className="text-[10px] sm:text-xs px-2 py-1 rounded bg-red-500/20 text-red-300 hover:bg-red-500/30 transition-colors shrink-0 ml-2"
                                 >
-                                    Resolver
+                                    OK
                                 </button>
                             </div>
                         ))}
