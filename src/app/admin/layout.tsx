@@ -2,6 +2,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { LogoutButton } from '@/components/admin/LogoutButton';
 
 export default async function AdminLayout({
     children,
@@ -25,7 +26,7 @@ export default async function AdminLayout({
                     </h1>
                 </div>
 
-                <nav className="flex-1 p-4 space-y-1">
+                <nav className="flex-1 p-4 space-y-1 flex flex-col">
                     <Link
                         href="/admin"
                         className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
@@ -44,6 +45,10 @@ export default async function AdminLayout({
                     >
                         <span>👥 Usuarios Globales</span>
                     </Link>
+
+                    <div className="pt-4 mt-auto">
+                        <LogoutButton />
+                    </div>
                 </nav>
 
                 <div className="p-4 border-t border-slate-800">
