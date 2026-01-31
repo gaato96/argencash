@@ -1,0 +1,39 @@
+2026-01-30T05:56:10.144Z : [ADMIN-PAGE] AdminDashboardPage starting...
+2026-01-30T05:56:10.150Z : [ADMIN-PAGE] ADMIN PAGE ERROR: Dynamic server usage: Route /admin couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+2026-01-30T05:56:10.150Z : [ADMIN-PAGE] STACK: Error: Dynamic server usage: Route /admin couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at w (C:\Users\gaato\.gemini\antigravity\scratch\finance-manager-pro\.next\server\chunks\ssr\_5b6fb2cc._.js:34:33372)
+    at m (C:\Users\gaato\.gemini\antigravity\scratch\finance-manager-pro\.next\server\chunks\ssr\_5b6fb2cc._.js:37:17005)
+    at h (C:\Users\gaato\.gemini\antigravity\scratch\finance-manager-pro\.next\server\chunks\ssr\_5b6fb2cc._.js:37:24380)
+    at i (C:\Users\gaato\.gemini\antigravity\scratch\finance-manager-pro\.next\server\chunks\ssr\[root-of-the-server]__9d83989a._.js:1:679)
+    at eC (C:\Users\gaato\.gemini\antigravity\scratch\finance-manager-pro\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:27277)
+    at e (C:\Users\gaato\.gemini\antigravity\scratch\finance-manager-pro\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:31392)
+    at eU (C:\Users\gaato\.gemini\antigravity\scratch\finance-manager-pro\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:33397)
+    at Array.toJSON (C:\Users\gaato\.gemini\antigravity\scratch\finance-manager-pro\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:28935)
+    at stringify (<anonymous>)
+    at eX (C:\Users\gaato\.gemini\antigravity\scratch\finance-manager-pro\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:42569)
+2026-01-30T15:49:44.308Z : [ADMIN-PAGE] AdminDashboardPage starting...
+2026-01-30T15:49:44.311Z : [ADMIN-PAGE] ADMIN PAGE ERROR: Dynamic server usage: Route /admin couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+2026-01-30T15:49:44.312Z : [ADMIN-PAGE] STACK: Error: Dynamic server usage: Route /admin couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at w (C:\Users\gaato\.gemini\antigravity\scratch\finance-manager-pro\.next\server\chunks\ssr\_5b6fb2cc._.js:34:33372)
+    at m (C:\Users\gaato\.gemini\antigravity\scratch\finance-manager-pro\.next\server\chunks\ssr\_5b6fb2cc._.js:37:17005)
+    at h (C:\Users\gaato\.gemini\antigravity\scratch\finance-manager-pro\.next\server\chunks\ssr\_5b6fb2cc._.js:37:24380)
+    at i (C:\Users\gaato\.gemini\antigravity\scratch\finance-manager-pro\.next\server\chunks\ssr\[root-of-the-server]__9d83989a._.js:1:679)
+    at eC (C:\Users\gaato\.gemini\antigravity\scratch\finance-manager-pro\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:27277)
+    at e (C:\Users\gaato\.gemini\antigravity\scratch\finance-manager-pro\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:31392)
+    at eU (C:\Users\gaato\.gemini\antigravity\scratch\finance-manager-pro\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:33397)
+    at Array.toJSON (C:\Users\gaato\.gemini\antigravity\scratch\finance-manager-pro\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:28935)
+    at stringify (<anonymous>)
+    at eX (C:\Users\gaato\.gemini\antigravity\scratch\finance-manager-pro\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:42569)
+2026-01-30T17:09:13.289Z : [ADMIN-PAGE] AdminDashboardPage starting...
+2026-01-30T17:09:13.291Z : [ADMIN-PAGE] ADMIN PAGE ERROR: Dynamic server usage: Route /admin couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+2026-01-30T17:09:13.292Z : [ADMIN-PAGE] STACK: Error: Dynamic server usage: Route /admin couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at w (C:\Users\gaato\.gemini\antigravity\scratch\finance-manager-pro\.next\server\chunks\ssr\_5b6fb2cc._.js:34:33372)
+    at m (C:\Users\gaato\.gemini\antigravity\scratch\finance-manager-pro\.next\server\chunks\ssr\_5b6fb2cc._.js:37:17005)
+    at h (C:\Users\gaato\.gemini\antigravity\scratch\finance-manager-pro\.next\server\chunks\ssr\_5b6fb2cc._.js:37:24380)
+    at i (C:\Users\gaato\.gemini\antigravity\scratch\finance-manager-pro\.next\server\chunks\ssr\[root-of-the-server]__9d83989a._.js:1:679)
+    at eC (C:\Users\gaato\.gemini\antigravity\scratch\finance-manager-pro\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:27277)
+    at e (C:\Users\gaato\.gemini\antigravity\scratch\finance-manager-pro\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:31392)
+    at eU (C:\Users\gaato\.gemini\antigravity\scratch\finance-manager-pro\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:33397)
+    at Array.toJSON (C:\Users\gaato\.gemini\antigravity\scratch\finance-manager-pro\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:28935)
+    at stringify (<anonymous>)
+    at eX (C:\Users\gaato\.gemini\antigravity\scratch\finance-manager-pro\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:42569)

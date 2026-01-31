@@ -9,7 +9,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "postinstall": "prisma generate && node prisma/seed-superadmin.js && next build",
+    "postinstall": "prisma generate",
     "lint": "eslint"
   },
   "dependencies": {

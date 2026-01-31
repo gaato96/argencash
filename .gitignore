@@ -49,3 +49,7 @@ next-env.d.ts
 *.sqlite3
 database.sqlite
 
+# build archives
+*.tar.gz
+*.zip
+next-build.*
