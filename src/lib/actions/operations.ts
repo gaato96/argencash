@@ -693,3 +693,81 @@ export async function createCommissionExpense(data: {
     revalidatePath('/dashboard/caja');
     return result;
 }
+
+// ═══════════════════════════════════════════════════════════════
+// INCOME (INGRESO) - Non-profit direct income
+// ═══════════════════════════════════════════════════════════════
+
+export async function createIncomeOperation(data: {
+    amount: number;
+    currency: 'ARS' | 'USD';
+    accountId: string;
+    description: string;
+    date?: string; // ISO date string, defaults to now
+}) {
+    const session = await getSessionContext();
+
+    if (!session.user.tenantId) {
+        throw new Error('Tenant no encontrado');
+    }
+
+    const tenantId = session.user.tenantId;
+
+    // NO cash session required — incomes are isolated from daily operations
+    const cashSession = await prisma.cashSession.findFirst({
+        where: { tenantId, status: 'OPEN' },
+    });
+
+    const createdAt = data.date ? new Date(data.date) : new Date();
+
+    const result = await prisma.$transaction(async (tx: any) => {
+        const operation = await tx.operation.create({
+            data: {
+                tenantId,
+                type: 'INGRESO',
+                mainAmount: data.amount,
+                mainCurrency: data.currency,
+                createdById: session.user.id,
+                cashSessionId: cashSession?.id || null,
+                notes: data.description,
+                createdAt,
+            },
+        });
+
+        // Credit the selected account (positive movement)
+        await tx.accountMovement.create({
+            data: {
+                tenantId,
+                accountId: data.accountId,
+                currency: data.currency,
+                amount: data.amount,
+                type: 'OPERATION',
+                referenceId: operation.id,
+                description: `Ingreso: ${data.description}`,
+                createdAt,
+            },
+        });
+
+        return operation;
+    });
+
+    revalidatePath('/dashboard');
+    revalidatePath('/dashboard/operaciones');
+    revalidatePath('/dashboard/cuentas');
+    revalidatePath('/dashboard/ingresos');
+    return result;
+}
+
+export async function getIncomes(tenantId: string, limit: number = 30) {
+    return prisma.operation.findMany({
+        where: { tenantId, type: 'INGRESO', status: { not: 'CANCELLED' } },
+        include: {
+            createdBy: { select: { name: true } },
+            movements: {
+                include: { account: { select: { id: true, name: true, currency: true } } },
+            },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+    });
+}

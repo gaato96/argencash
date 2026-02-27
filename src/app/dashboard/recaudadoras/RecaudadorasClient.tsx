@@ -48,12 +48,12 @@ export function RecaudadorasClient({ recaudadoras, accounts }: RecaudadorasClien
 
     const [createForm, setCreateForm] = useState({
         clientName: '',
-        commissionRate: '1',
     });
 
     const [liquidateForm, setLiquidateForm] = useState({
         amount: '',
         destinationAccountId: '',
+        commissionRate: '1',
     });
 
     const [depositForm, setDepositForm] = useState({
@@ -72,10 +72,9 @@ export function RecaudadorasClient({ recaudadoras, accounts }: RecaudadorasClien
         try {
             await createRecaudadora({
                 clientName: createForm.clientName,
-                commissionRate: parseFloat(createForm.commissionRate) / 100,
             });
             setShowCreateModal(false);
-            setCreateForm({ clientName: '', commissionRate: '1' });
+            setCreateForm({ clientName: '' });
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Error');
         } finally {
@@ -94,9 +93,10 @@ export function RecaudadorasClient({ recaudadoras, accounts }: RecaudadorasClien
             await liquidateRecaudadora({
                 recaudadoraId: selectedRecaudadora.id,
                 destinationAccountId: liquidateForm.destinationAccountId,
+                commissionRate: parseFloat(liquidateForm.commissionRate) / 100,
             });
             setShowLiquidateModal(false);
-            setLiquidateForm({ amount: '', destinationAccountId: '' });
+            setLiquidateForm({ amount: '', destinationAccountId: '', commissionRate: '1' });
             setSelectedRecaudadora(null);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Error');
@@ -226,7 +226,11 @@ export function RecaudadorasClient({ recaudadoras, accounts }: RecaudadorasClien
                                 <button
                                     onClick={() => {
                                         setSelectedRecaudadora(rec);
-                                        setLiquidateForm({ amount: rec.dailyAccumulated.toString(), destinationAccountId: '' });
+                                        setLiquidateForm({
+                                            amount: rec.dailyAccumulated.toString(),
+                                            destinationAccountId: '',
+                                            commissionRate: (rec.commissionRate * 100).toFixed(1),
+                                        });
                                         setShowLiquidateModal(true);
                                     }}
                                     disabled={rec.dailyAccumulated <= 0}
@@ -267,18 +271,6 @@ export function RecaudadorasClient({ recaudadoras, accounts }: RecaudadorasClien
                                 />
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1">Comisión (%)</label>
-                                <input
-                                    type="number"
-                                    step="0.1"
-                                    value={createForm.commissionRate}
-                                    onChange={(e) => setCreateForm({ ...createForm, commissionRate: e.target.value })}
-                                    className="w-full px-4 py-3 rounded-lg bg-slate-900 border border-slate-700 text-white"
-                                    placeholder="1"
-                                />
-                            </div>
-
                             <button type="submit" disabled={loading} className="w-full py-4 rounded-xl bg-emerald-500 text-white font-bold hover:bg-emerald-600 disabled:opacity-50 shadow-lg shadow-emerald-900/20">
                                 {loading ? 'Creando...' : 'Crear Recaudadora'}
                             </button>
@@ -309,16 +301,34 @@ export function RecaudadorasClient({ recaudadoras, accounts }: RecaudadorasClien
                                     <span className="text-slate-400">Total Acumulado:</span>
                                     <span className="text-white font-medium">{formatARS(selectedRecaudadora.dailyAccumulated)}</span>
                                 </div>
-                                <div className="flex justify-between text-sm mt-1">
-                                    <span className="text-slate-400">Comisión ({(selectedRecaudadora.commissionRate * 100).toFixed(1)}%):</span>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-1">Comisión (%) para esta liquidación</label>
+                                <input
+                                    type="number"
+                                    step="0.1"
+                                    min="0"
+                                    max="100"
+                                    value={liquidateForm.commissionRate}
+                                    onChange={(e) => setLiquidateForm({ ...liquidateForm, commissionRate: e.target.value })}
+                                    className="w-full px-4 py-3 rounded-lg bg-slate-900 border border-slate-700 text-white"
+                                    placeholder="1"
+                                    required
+                                />
+                            </div>
+
+                            <div className="p-3 rounded-lg bg-slate-700/50">
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-slate-400">Comisión ({liquidateForm.commissionRate}%):</span>
                                     <span className="text-emerald-400 font-medium">
-                                        {formatARS(selectedRecaudadora.dailyAccumulated * selectedRecaudadora.commissionRate)}
+                                        {formatARS(selectedRecaudadora.dailyAccumulated * (parseFloat(liquidateForm.commissionRate) || 0) / 100)}
                                     </span>
                                 </div>
                                 <div className="border-t border-slate-600/50 my-2 pt-2 flex justify-between font-bold">
                                     <span className="text-white">Neto a Liquidar:</span>
                                     <span className="text-emerald-400">
-                                        {formatARS(selectedRecaudadora.dailyAccumulated * (1 - selectedRecaudadora.commissionRate))}
+                                        {formatARS(selectedRecaudadora.dailyAccumulated * (1 - (parseFloat(liquidateForm.commissionRate) || 0) / 100))}
                                     </span>
                                 </div>
                             </div>

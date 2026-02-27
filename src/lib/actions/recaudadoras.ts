@@ -28,7 +28,6 @@ export async function getRecaudadoras(tenantId: string) {
 
 export async function createRecaudadora(data: {
     clientName: string;
-    commissionRate?: number;
 }) {
     const session = await getSessionContext();
     if (!session.user.tenantId) throw new Error('Tenant no encontrado');
@@ -41,7 +40,7 @@ export async function createRecaudadora(data: {
         data: {
             tenantId: session.user.tenantId,
             clientName: data.clientName,
-            commissionRate: data.commissionRate || tenant?.commissionRate || 0.01,
+            commissionRate: tenant?.commissionRate || 0.01,
         },
     });
 
@@ -105,6 +104,7 @@ export async function recordRecaudadoraDeposit(data: {
 export async function liquidateRecaudadora(data: {
     recaudadoraId: string;
     destinationAccountId: string;
+    commissionRate: number; // Dynamic: set at liquidation time
 }) {
     const session = await getSessionContext();
     if (!session.user.tenantId) throw new Error('Tenant no encontrado');
@@ -122,7 +122,7 @@ export async function liquidateRecaudadora(data: {
         where: { tenantId, status: 'OPEN' },
     });
 
-    const commission = amountToLiquidate * recaudadora.commissionRate;
+    const commission = amountToLiquidate * data.commissionRate;
     const netAmount = amountToLiquidate - commission;
     const currency = 'ARS';
 

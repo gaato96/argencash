@@ -50,6 +50,16 @@ export function CuentasCorrientesClient({ accounts, physicalAccounts }: CuentasC
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [newName, setNewName] = useState('');
 
+    // Bulk loading state for BORROW
+    const [showBulkBorrowModal, setShowBulkBorrowModal] = useState(false);
+    const [bulkBorrowAccount, setBulkBorrowAccount] = useState<CurrentAccount | null>(null);
+    const [bulkRawInput, setBulkRawInput] = useState('');
+    const [bulkCurrency, setBulkCurrency] = useState<'ARS' | 'USD'>('ARS');
+    const [bulkDescription, setBulkDescription] = useState('');
+    const [bulkTargetAccountId, setBulkTargetAccountId] = useState('');
+    const [parsedBulkAmounts, setParsedBulkAmounts] = useState<Array<{ amount: number; confirmed: boolean }>>([]);
+    const [bulkError, setBulkError] = useState('');
+
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -109,6 +119,54 @@ export function CuentasCorrientesClient({ accounts, physicalAccounts }: CuentasC
         } catch (error) {
             console.error(error);
             alert('Error al procesar la operación');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleParseBulkAmounts = () => {
+        const lines = bulkRawInput.split(/[\n+]+/).map((l: any) => l.trim()).filter((l: any) => l !== '');
+        const newAmounts = lines.map((l: any) => {
+            const amount = parseFloat(l.replace(/,/g, ''));
+            return isNaN(amount) ? null : { amount, confirmed: false };
+        }).filter((d: any) => d !== null) as Array<{ amount: number; confirmed: boolean }>;
+
+        setParsedBulkAmounts([...parsedBulkAmounts, ...newAmounts]);
+        setBulkRawInput('');
+    };
+
+    const handleBulkBorrow = async () => {
+        if (!bulkBorrowAccount) return;
+
+        const confirmedAmounts = parsedBulkAmounts.filter((d: any) => d.confirmed);
+        if (confirmedAmounts.length === 0) {
+            setBulkError('No hay montos confirmados para registrar');
+            return;
+        }
+
+        const totalAmount = confirmedAmounts.reduce((sum: number, d: any) => sum + d.amount, 0);
+
+        setBulkError('');
+        setLoading(true);
+
+        try {
+            await receiveMoney({
+                currentAccountId: bulkBorrowAccount.id,
+                amount: totalAmount,
+                currency: bulkCurrency,
+                description: bulkDescription || `Recibido masivo ${bulkCurrency}`,
+                targetAccountId: bulkTargetAccountId || undefined,
+            });
+            setShowBulkBorrowModal(false);
+            setBulkBorrowAccount(null);
+            setBulkRawInput('');
+            setBulkCurrency('ARS');
+            setBulkDescription('');
+            setBulkTargetAccountId('');
+            setParsedBulkAmounts([]);
+        } catch (error) {
+            console.error(error);
+            setBulkError('Error al procesar la operación');
         } finally {
             setLoading(false);
         }
@@ -210,7 +268,16 @@ export function CuentasCorrientesClient({ accounts, physicalAccounts }: CuentasC
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                             {/* Actions if WE OWE (Negative Balance) */}
                             <button
-                                onClick={() => { setSelectedAccount(acc); setActionType('BORROW'); }}
+                                onClick={() => {
+                                    setBulkBorrowAccount(acc);
+                                    setBulkRawInput('');
+                                    setBulkCurrency('ARS');
+                                    setBulkDescription('');
+                                    setBulkTargetAccountId('');
+                                    setParsedBulkAmounts([]);
+                                    setBulkError('');
+                                    setShowBulkBorrowModal(true);
+                                }}
                                 className="flex flex-col items-center justify-center p-3 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 transition-colors"
                             >
                                 <ArrowDownLeft className="w-5 h-5 mb-1" />
@@ -375,6 +442,154 @@ export function CuentasCorrientesClient({ accounts, physicalAccounts }: CuentasC
                     </div>
                 </div>
             )}
+
+            {/* Bulk Borrow Modal */}
+            {showBulkBorrowModal && bulkBorrowAccount && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="w-full max-w-xl bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden">
+                        <div className="flex items-center justify-between p-4 border-b border-slate-700">
+                            <div>
+                                <h2 className="text-lg font-semibold text-white">Recibir (Deuda) - Carga Masiva</h2>
+                                <p className="text-sm text-slate-400">{bulkBorrowAccount.name}</p>
+                            </div>
+                            <button onClick={() => { setShowBulkBorrowModal(false); setBulkBorrowAccount(null); setParsedBulkAmounts([]); }} className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
+                            {bulkError && <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">{bulkError}</div>}
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="p-3 rounded-lg bg-slate-700/50">
+                                    <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Saldo ARS</p>
+                                    <p className={`font-medium ${bulkBorrowAccount.balanceARS >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                        {formatARS(bulkBorrowAccount.balanceARS)}
+                                    </p>
+                                </div>
+                                <div className="p-3 rounded-lg bg-slate-700/50">
+                                    <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Saldo USD</p>
+                                    <p className={`font-medium ${bulkBorrowAccount.balanceUSD >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                        {formatUSD(bulkBorrowAccount.balanceUSD)}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">Ingresar Montos</label>
+                                        <textarea
+                                            value={bulkRawInput}
+                                            onChange={(e) => setBulkRawInput(e.target.value)}
+                                            className="w-full h-40 px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-white font-mono text-sm focus:ring-2 focus:ring-red-500/50 outline-none"
+                                            placeholder={"1500\n2300+4500\n..."}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={handleParseBulkAmounts}
+                                            disabled={!bulkRawInput.trim()}
+                                            className="w-full mt-2 py-2 px-4 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20 font-semibold hover:bg-red-500/20 transition-all disabled:opacity-50"
+                                        >
+                                            Procesar
+                                        </button>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs uppercase tracking-wider font-medium text-slate-300 mb-1">Moneda</label>
+                                        <select
+                                            value={bulkCurrency}
+                                            onChange={(e) => setBulkCurrency(e.target.value as 'ARS' | 'USD')}
+                                            className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white text-sm"
+                                        >
+                                            <option value="ARS">ARS (Pesos)</option>
+                                            <option value="USD">USD (Dólares)</option>
+                                        </select>
+                                    </div>
+
+                                    <SearchableAccountSelect
+                                        label="Cuenta Física (Donde ingresa)"
+                                        accounts={physicalAccounts.filter((acc: any) => acc.currency === bulkCurrency)}
+                                        value={bulkTargetAccountId}
+                                        onValueChange={setBulkTargetAccountId}
+                                        placeholder="Seleccionar cuenta..."
+                                    />
+
+                                    <div>
+                                        <label className="block text-xs uppercase tracking-wider font-medium text-slate-300 mb-1">Descripción</label>
+                                        <input
+                                            type="text"
+                                            value={bulkDescription}
+                                            onChange={(e) => setBulkDescription(e.target.value)}
+                                            className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white text-sm"
+                                            placeholder="Ej: Préstamo Lunes"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col min-h-[300px]">
+                                    <label className="block text-xs uppercase tracking-wider font-medium text-slate-300 mb-1 border-b border-slate-700 pb-2">Montos ({parsedBulkAmounts.length})</label>
+                                    <div className="flex-1 overflow-y-auto space-y-2 py-2">
+                                        {parsedBulkAmounts.length === 0 ? (
+                                            <div className="flex flex-col items-center justify-center h-full text-slate-500 text-xs italic space-y-2">
+                                                <ArrowDownLeft className="w-8 h-8 opacity-20" />
+                                                <span>Esperando entradas...</span>
+                                            </div>
+                                        ) : (
+                                            parsedBulkAmounts.map((d, i) => (
+                                                <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-slate-900/50 border border-slate-700/50 transition-all hover:bg-slate-900">
+                                                    <span className="text-sm text-white font-medium">
+                                                        {bulkCurrency === 'ARS' ? formatARS(d.amount) : formatUSD(d.amount)}
+                                                    </span>
+                                                    <div className="flex items-center gap-2">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={d.confirmed}
+                                                            onChange={(e) => {
+                                                                const next = [...parsedBulkAmounts];
+                                                                next[i].confirmed = e.target.checked;
+                                                                setParsedBulkAmounts(next);
+                                                            }}
+                                                            className="w-4 h-4 rounded-md bg-slate-900 border-slate-700 text-red-500 focus:ring-red-500/20"
+                                                        />
+                                                        <button
+                                                            onClick={() => setParsedBulkAmounts(parsedBulkAmounts.filter((_: any, idx: number) => idx !== i))}
+                                                            className="p-1 rounded-md hover:bg-red-500/10 text-slate-600 hover:text-red-400"
+                                                        >
+                                                            <X className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+
+                                    {parsedBulkAmounts.length > 0 && (
+                                        <div className="mt-4 pt-4 border-t border-slate-700">
+                                            <div className="flex justify-between items-center mb-4 bg-red-500/5 p-3 rounded-xl border border-red-500/10">
+                                                <span className="text-sm text-red-400 font-medium">Total Confirmado:</span>
+                                                <span className="text-xl font-bold text-red-400">
+                                                    {bulkCurrency === 'ARS'
+                                                        ? formatARS(parsedBulkAmounts.filter((d: any) => d.confirmed).reduce((s: number, d: any) => s + d.amount, 0))
+                                                        : formatUSD(parsedBulkAmounts.filter((d: any) => d.confirmed).reduce((s: number, d: any) => s + d.amount, 0))}
+                                                </span>
+                                            </div>
+                                            <button
+                                                onClick={handleBulkBorrow}
+                                                disabled={loading || parsedBulkAmounts.filter(d => d.confirmed).length === 0}
+                                                className="w-full py-4 rounded-xl bg-red-600 text-white font-bold hover:bg-red-500 shadow-lg shadow-red-900/20 disabled:opacity-50 transition-all"
+                                            >
+                                                {loading ? 'Registrando...' : 'Confirmar Deuda Total'}
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Create Modal */}
             {showCreateModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
