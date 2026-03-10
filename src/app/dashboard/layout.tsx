@@ -19,8 +19,10 @@ import {
     LogOut,
     Menu,
     X,
+    RotateCcw,
 } from 'lucide-react';
 import { useState } from 'react';
+import { resetTenantData } from '@/lib/actions/reset';
 
 const allNavigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, module: 'dashboard' },
@@ -41,6 +43,23 @@ export default function DashboardLayout({
     const { data: session } = useSession();
     const pathname = usePathname();
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [isResetting, setIsResetting] = useState(false);
+
+    const handleReset = async () => {
+        if (!confirm('⚠️ ADVERTENCIA: Esta acción eliminará TODAS las operaciones, movimientos, sesiones y saldos. Las cuentas quedarán en 0. ¿Estás absolutamente seguro de que deseas continuar?')) return;
+        if (!confirm('Esta acción es IRREVERSIBLE. ¿Confirmar reseteo total?')) return;
+
+        try {
+            setIsResetting(true);
+            await resetTenantData();
+            alert('El sistema se ha reseteado correctamente. Los saldos están en 0.');
+            window.location.reload();
+        } catch (error: any) {
+            alert('Error al resetear: ' + error.message);
+        } finally {
+            setIsResetting(false);
+        }
+    };
 
     // Parse enabled modules
     const enabledModules = session?.user?.enabledModules
@@ -146,6 +165,14 @@ export default function DashboardLayout({
                                     {session?.user.role === 'SUPERADMIN' ? 'Super Admin' : 'Admin'}
                                 </p>
                             </div>
+                            <button
+                                onClick={handleReset}
+                                disabled={isResetting}
+                                className="p-2 mr-1 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all disabled:opacity-50"
+                                title="Resetear Sistema (Todo a 0)"
+                            >
+                                <RotateCcw className={`w-5 h-5 ${isResetting ? 'animate-spin' : ''}`} />
+                            </button>
                             <button
                                 onClick={() => signOut({ callbackUrl: '/login' })}
                                 className="p-2 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all"

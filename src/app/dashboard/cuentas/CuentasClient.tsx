@@ -19,10 +19,11 @@ import {
     Edit2,
     Trash2,
     Download,
-    Upload
+    Upload,
+    SlidersHorizontal
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { updateAccount, deleteAccount, importAccountsCSV } from '@/lib/actions/dashboard';
+import { updateAccount, deleteAccount, importAccountsCSV, adjustAccountBalance } from '@/lib/actions/dashboard';
 
 interface Account {
     id: string;
@@ -63,6 +64,9 @@ export function CuentasClient({ accounts }: CuentasClientProps) {
     const [showEditModal, setShowEditModal] = useState(false);
     const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
     const [editingAccount, setEditingAccount] = useState<Account | null>(null);
+    const [showAdjustModal, setShowAdjustModal] = useState(false);
+    const [adjustingAccount, setAdjustingAccount] = useState<Account | null>(null);
+    const [newBalance, setNewBalance] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const [currencyFilter, setCurrencyFilter] = useState<'ALL' | 'ARS' | 'USD'>('ALL');
     const [typeFilter, setTypeFilter] = useState<'ALL' | 'CASH' | 'VIRTUAL'>('ALL');
@@ -128,6 +132,25 @@ export function CuentasClient({ accounts }: CuentasClientProps) {
             router.refresh();
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Error al actualizar cuenta');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleAdjustBalance = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!adjustingAccount || newBalance === '') return;
+        setError('');
+        setLoading(true);
+
+        try {
+            await adjustAccountBalance(adjustingAccount.id, parseFloat(newBalance));
+            setShowAdjustModal(false);
+            setAdjustingAccount(null);
+            setNewBalance('');
+            router.refresh();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Error al ajustar saldo');
         } finally {
             setLoading(false);
         }
@@ -278,6 +301,18 @@ export function CuentasClient({ accounts }: CuentasClientProps) {
                                                         <Download className="w-3.5 h-3.5" />
                                                     </button>
                                                 )}
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setAdjustingAccount(account);
+                                                        setNewBalance(account.balance.toString());
+                                                        setShowAdjustModal(true);
+                                                    }}
+                                                    className="p-1.5 rounded-lg text-emerald-500 hover:text-white hover:bg-emerald-600/20 transition-colors"
+                                                    title="Ajustar Saldo"
+                                                >
+                                                    <SlidersHorizontal className="w-3.5 h-3.5" />
+                                                </button>
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
@@ -755,6 +790,71 @@ export function CuentasClient({ accounts }: CuentasClientProps) {
                     </div>
                 )
             }
+
+            {/* Adjust Balance Modal */}
+            {
+                showAdjustModal && adjustingAccount && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                        <div className="w-full max-w-sm bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl">
+                            <div className="flex items-center justify-between p-4 border-b border-slate-700">
+                                <div>
+                                    <h2 className="text-lg font-semibold text-white">Ajustar Saldo</h2>
+                                    <p className="text-xs text-slate-400">{adjustingAccount.name}</p>
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        setShowAdjustModal(false);
+                                        setAdjustingAccount(null);
+                                    }}
+                                    className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleAdjustBalance} className="p-4 space-y-4">
+                                {error && (
+                                    <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                                        {error}
+                                    </div>
+                                )}
+
+                                <div className="p-3 bg-slate-900/50 rounded-lg flex justify-between items-center border border-slate-700/50">
+                                    <p className="text-xs text-slate-400 font-medium">Saldo Actual</p>
+                                    <p className={`font-bold ${adjustingAccount.balance >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                        {adjustingAccount.currency === 'USD' ? formatUSD(adjustingAccount.balance) : formatARS(adjustingAccount.balance)}
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-1">Nuevo Saldo Real</label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        value={newBalance}
+                                        onChange={(e) => setNewBalance(e.target.value)}
+                                        className="w-full px-4 py-3 rounded-lg bg-slate-900/50 border border-slate-600/50 text-white font-bold text-lg"
+                                        required
+                                        autoFocus
+                                    />
+                                    <p className="text-[10px] text-slate-500 mt-2 leading-tight">
+                                        Ingresa el saldo exacto que tiene la cuenta actualmente. Se creará automáticamente un movimiento de ajuste.
+                                    </p>
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="w-full py-3 rounded-lg bg-emerald-500 text-white font-semibold hover:bg-emerald-600 disabled:opacity-50"
+                                >
+                                    {loading ? 'Ajustando...' : 'Confirmar Ajuste'}
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                )
+            }
+
             {/* Detail Modal */}
             {selectedAccount && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">

@@ -546,3 +546,37 @@ export async function createAlert(data: {
 }) {
     return prisma.alert.create({ data });
 }
+
+export async function adjustAccountBalance(accountId: string, newBalance: number) {
+    const session = await getSessionContext();
+    const tenantId = session.user.tenantId;
+
+    if (!tenantId) throw new Error('Tenant no encontrado');
+
+    const account = await prisma.account.findUnique({
+        where: { id: accountId },
+        include: { movements: true }
+    });
+
+    if (!account) throw new Error('Cuenta no encontrada');
+
+    const currentBalance = account.movements.reduce((sum: number, m: any) => sum + m.amount, 0);
+    const difference = newBalance - currentBalance;
+
+    if (difference !== 0) {
+        await prisma.accountMovement.create({
+            data: {
+                tenantId,
+                accountId,
+                currency: account.currency,
+                amount: difference,
+                type: 'ADJUSTMENT',
+                description: 'Ajuste manual de saldo',
+            }
+        });
+        revalidatePath('/dashboard/cuentas');
+        revalidatePath('/dashboard');
+    }
+
+    return { success: true };
+}
