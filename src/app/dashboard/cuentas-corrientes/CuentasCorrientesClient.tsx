@@ -8,10 +8,11 @@ import {
     lendMoney,
     collectDebt,
     createCurrentAccount,
-    deleteCurrentAccount
+    deleteCurrentAccount,
+    getMovementsForAccount
 } from '@/lib/actions/current-accounts';
 import { SearchableAccountSelect } from '@/components/SearchableAccountSelect';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import {
     Users,
     ArrowDownLeft,
@@ -59,6 +60,45 @@ export function CuentasCorrientesClient({ accounts, physicalAccounts }: CuentasC
     const [bulkTargetAccountId, setBulkTargetAccountId] = useState('');
     const [parsedBulkAmounts, setParsedBulkAmounts] = useState<Array<{ amount: number; confirmed: boolean }>>([]);
     const [bulkError, setBulkError] = useState('');
+
+    // History state
+    const [historyAccount, setHistoryAccount] = useState<CurrentAccount | null>(null);
+    const [historyMovements, setHistoryMovements] = useState<any[]>([]);
+    const [historyLoading, setHistoryLoading] = useState(false);
+    const [historyDateFrom, setHistoryDateFrom] = useState('');
+    const [historyDateTo, setHistoryDateTo] = useState('');
+
+    const openHistory = async (acc: CurrentAccount) => {
+        setHistoryAccount(acc);
+        setHistoryDateFrom('');
+        setHistoryDateTo('');
+        setHistoryLoading(true);
+        try {
+            const movements = await getMovementsForAccount(acc.id);
+            setHistoryMovements(movements);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setHistoryLoading(false);
+        }
+    };
+
+    const fetchHistoryFiltered = async () => {
+        if (!historyAccount) return;
+        setHistoryLoading(true);
+        try {
+            const movements = await getMovementsForAccount(
+                historyAccount.id,
+                historyDateFrom || undefined,
+                historyDateTo || undefined
+            );
+            setHistoryMovements(movements);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setHistoryLoading(false);
+        }
+    };
 
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -255,6 +295,13 @@ export function CuentasCorrientesClient({ accounts, physicalAccounts }: CuentasC
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => openHistory(acc)}
+                                    className="p-2 rounded-lg text-slate-500 hover:text-emerald-400 hover:bg-emerald-400/10 transition-colors"
+                                    title="Ver Historial"
+                                >
+                                    <History className="w-4 h-4" />
+                                </button>
                                 <button
                                     onClick={() => handleDelete(acc.id)}
                                     className="p-2 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-400/10 transition-colors"
@@ -628,6 +675,124 @@ export function CuentasCorrientesClient({ accounts, physicalAccounts }: CuentasC
                                 {loading ? 'Creando...' : 'Crear Cuenta'}
                             </button>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* History Modal */}
+            {historyAccount && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="w-full max-w-2xl bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl max-h-[90vh] flex flex-col">
+                        <div className="flex items-center justify-between p-4 border-b border-slate-700">
+                            <div>
+                                <h2 className="text-lg font-semibold text-white">Historial de Movimientos</h2>
+                                <p className="text-sm text-slate-400">{historyAccount.name}</p>
+                            </div>
+                            <button onClick={() => setHistoryAccount(null)} className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {/* Saldos actuales */}
+                        <div className="grid grid-cols-2 gap-3 p-4 border-b border-slate-700/50">
+                            <div className="p-3 rounded-lg bg-slate-700/50">
+                                <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Saldo ARS</p>
+                                <p className={`font-bold ${historyAccount.balanceARS >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                    {formatARS(historyAccount.balanceARS)}
+                                </p>
+                            </div>
+                            <div className="p-3 rounded-lg bg-slate-700/50">
+                                <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Saldo USD</p>
+                                <p className={`font-bold ${historyAccount.balanceUSD >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                    {formatUSD(historyAccount.balanceUSD)}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Date Filters */}
+                        <div className="flex items-end gap-3 p-4 border-b border-slate-700/50">
+                            <div className="flex-1">
+                                <label className="block text-[10px] text-slate-500 uppercase font-bold mb-1">Desde</label>
+                                <input
+                                    type="date"
+                                    value={historyDateFrom}
+                                    onChange={(e) => setHistoryDateFrom(e.target.value)}
+                                    className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-600 text-white text-sm"
+                                />
+                            </div>
+                            <div className="flex-1">
+                                <label className="block text-[10px] text-slate-500 uppercase font-bold mb-1">Hasta</label>
+                                <input
+                                    type="date"
+                                    value={historyDateTo}
+                                    onChange={(e) => setHistoryDateTo(e.target.value)}
+                                    className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-600 text-white text-sm"
+                                />
+                            </div>
+                            <button
+                                onClick={fetchHistoryFiltered}
+                                disabled={historyLoading}
+                                className="px-4 py-2 rounded-lg bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-600 disabled:opacity-50"
+                            >
+                                Filtrar
+                            </button>
+                            {(historyDateFrom || historyDateTo) && (
+                                <button
+                                    onClick={() => { setHistoryDateFrom(''); setHistoryDateTo(''); openHistory(historyAccount); }}
+                                    className="px-3 py-2 rounded-lg bg-slate-700 text-slate-300 text-sm hover:bg-slate-600"
+                                >
+                                    Limpiar
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Movements List */}
+                        <div className="flex-1 overflow-y-auto p-4 space-y-2">
+                            {historyLoading ? (
+                                <div className="text-center py-8 text-slate-400">Cargando...</div>
+                            ) : historyMovements.length === 0 ? (
+                                <div className="text-center py-8 text-slate-500">No hay movimientos en el rango seleccionado</div>
+                            ) : (
+                                historyMovements.map((mov: any) => {
+                                    const typeLabels: Record<string, { label: string; color: string }> = {
+                                        BORROW: { label: 'Recibido (Nos prestan)', color: 'text-red-400' },
+                                        REPAY: { label: 'Devolución (Pagamos)', color: 'text-emerald-400' },
+                                        LEND: { label: 'Préstamo (Damos)', color: 'text-amber-400' },
+                                        COLLECT: { label: 'Cobro (Nos pagan)', color: 'text-blue-400' },
+                                    };
+                                    const typeInfo = typeLabels[mov.type] || { label: mov.type, color: 'text-slate-400' };
+                                    const date = new Date(mov.createdAt);
+
+                                    return (
+                                        <div key={mov.id} className="p-3 rounded-lg bg-slate-900/50 border border-slate-700/50 flex items-center justify-between gap-3">
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className={`text-xs font-bold ${typeInfo.color}`}>{typeInfo.label}</span>
+                                                    <span className="text-[10px] text-slate-600">{mov.currency}</span>
+                                                </div>
+                                                {mov.description && (
+                                                    <p className="text-xs text-slate-500 truncate">{mov.description}</p>
+                                                )}
+                                                <p className="text-[10px] text-slate-600 mt-1">
+                                                    {date.toLocaleDateString('es-AR')} {date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}
+                                                </p>
+                                            </div>
+                                            <div className="text-right shrink-0">
+                                                <p className={`font-bold text-sm ${typeInfo.color}`}>
+                                                    {mov.currency === 'USD' ? formatUSD(mov.amount) : formatARS(mov.amount)}
+                                                </p>
+                                                {mov.balanceAfterARS != null && (
+                                                    <p className="text-[10px] text-slate-600">ARS: {formatARS(mov.balanceAfterARS)}</p>
+                                                )}
+                                                {mov.balanceAfterUSD != null && (
+                                                    <p className="text-[10px] text-slate-600">USD: {formatUSD(mov.balanceAfterUSD)}</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
                     </div>
                 </div>
             )}

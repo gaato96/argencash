@@ -53,6 +53,32 @@ export async function getCurrentAccounts(tenantId: string) {
     });
 }
 
+export async function getMovementsForAccount(currentAccountId: string, dateFrom?: string, dateTo?: string) {
+    await getSessionContext();
+
+    const where: any = { currentAccountId };
+
+    if (dateFrom || dateTo) {
+        where.createdAt = {};
+        if (dateFrom) {
+            const from = new Date(dateFrom);
+            from.setHours(0, 0, 0, 0);
+            where.createdAt.gte = from;
+        }
+        if (dateTo) {
+            const to = new Date(dateTo);
+            to.setHours(23, 59, 59, 999);
+            where.createdAt.lte = to;
+        }
+    }
+
+    return prisma.currentAccountMovement.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        take: 200,
+    });
+}
+
 /**
  * Registrar dinero recibido (nos prestan liquidez)
  * Balance se vuelve negativo (debemos)
