@@ -58,8 +58,12 @@ export async function getOperations(tenantId: string, options?: {
 export async function createBuyOperation(data: {
     usdAmount: number;
     exchangeRate: number;
-    arsAccountId: string;        // Account we pay ARS from
     usdAccountId: string;        // Account we receive USD into
+    paymentType: 'CASH' | 'TRANSFER' | 'HYBRID';
+    cashAccountId?: string;
+    cashAmount?: number;
+    transferAccountId?: string;
+    transferAmount?: number;
     isDigital?: boolean;         // If true, check for surplus
     thirdPartyAccountId?: string; // For digital: account we sent ARS to
     arsAmountSent?: number;
@@ -110,6 +114,15 @@ export async function createBuyOperation(data: {
     }
 
     // Create operation with movements in transaction
+    // Validate amounts for hybrid
+    if (data.paymentType === 'HYBRID') {
+        const cashAmt = data.cashAmount || 0;
+        const transferAmt = data.transferAmount || 0;
+        if (Math.abs((cashAmt + transferAmt) - arsAmount) > 1) {
+            throw new Error('La suma del efectivo y transferencia debe ser igual al total');
+        }
+    }
+
     const result = await prisma.$transaction(async (tx: any) => {
         // Create operation
         const operation = await tx.operation.create({
@@ -120,6 +133,8 @@ export async function createBuyOperation(data: {
                 mainCurrency: 'USD',
                 secondaryAmount: arsAmount,
                 exchangeRate: data.exchangeRate,
+                cashAmount: data.cashAmount,
+                transferAmount: data.transferAmount,
                 createdById: session.user.id,
                 cashSessionId: cashSession.id,
                 notes: data.notes,
@@ -128,19 +143,59 @@ export async function createBuyOperation(data: {
             },
         });
 
-        // Create movements
-        // 1. Debit ARS from source account
-        await tx.accountMovement.create({
-            data: {
-                tenantId,
-                accountId: data.arsAccountId,
-                currency: 'ARS',
-                amount: -arsAmount,
-                type: 'OPERATION',
-                referenceId: operation.id,
-                description: `Compra USD ${data.usdAmount} @ ${data.exchangeRate}`,
-            },
-        });
+        // 1. Debit ARS based on payment type
+        if (data.paymentType === 'CASH' && data.cashAccountId) {
+            await tx.accountMovement.create({
+                data: {
+                    tenantId,
+                    accountId: data.cashAccountId,
+                    currency: 'ARS',
+                    amount: -arsAmount,
+                    type: 'OPERATION',
+                    referenceId: operation.id,
+                    description: `Compra USD ${data.usdAmount} @ ${data.exchangeRate} (efectivo)`,
+                },
+            });
+        } else if (data.paymentType === 'TRANSFER' && data.transferAccountId) {
+            await tx.accountMovement.create({
+                data: {
+                    tenantId,
+                    accountId: data.transferAccountId,
+                    currency: 'ARS',
+                    amount: -arsAmount,
+                    type: 'OPERATION',
+                    referenceId: operation.id,
+                    description: `Compra USD ${data.usdAmount} @ ${data.exchangeRate} (transferencia)`,
+                },
+            });
+        } else if (data.paymentType === 'HYBRID') {
+            if (data.cashAccountId && data.cashAmount) {
+                await tx.accountMovement.create({
+                    data: {
+                        tenantId,
+                        accountId: data.cashAccountId,
+                        currency: 'ARS',
+                        amount: -data.cashAmount,
+                        type: 'OPERATION',
+                        referenceId: operation.id,
+                        description: `Compra USD ${data.usdAmount} (parte efectivo)`,
+                    },
+                });
+            }
+            if (data.transferAccountId && data.transferAmount) {
+                await tx.accountMovement.create({
+                    data: {
+                        tenantId,
+                        accountId: data.transferAccountId,
+                        currency: 'ARS',
+                        amount: -data.transferAmount,
+                        type: 'OPERATION',
+                        referenceId: operation.id,
+                        description: `Compra USD ${data.usdAmount} (parte transferencia)`,
+                    },
+                });
+            }
+        }
 
         // 2. Credit USD to destination account
         await tx.accountMovement.create({
@@ -175,14 +230,16 @@ export async function createBuyOperation(data: {
         if (data.commissionAccountId && data.commissionAmount) {
             const ca = await tx.currentAccount.update({
                 where: { id: data.commissionAccountId },
-                data: { balance: { decrement: data.commissionAmount } },
+                data: { balanceARS: { decrement: data.commissionAmount } },
             });
             await tx.currentAccountMovement.create({
                 data: {
                     currentAccountId: data.commissionAccountId,
-                    type: 'BORROW', // We owe money (commission)
+                    type: 'BORROW',
                     amount: data.commissionAmount,
-                    balanceAfter: ca.balance,
+                    currency: 'ARS',
+                    balanceAfterARS: ca.balanceARS,
+                    balanceAfterUSD: ca.balanceUSD,
                     description: `Comisión compra USD digital (Op: ${operation.id.slice(-6)})`,
                 },
             });
@@ -554,14 +611,16 @@ export async function createWithdrawalOperation(data: {
         if (data.commissionAccountId && data.commissionAmount) {
             const ca = await tx.currentAccount.update({
                 where: { id: data.commissionAccountId },
-                data: { balance: { decrement: data.commissionAmount } },
+                data: { balanceARS: { decrement: data.commissionAmount } },
             });
             await tx.currentAccountMovement.create({
                 data: {
                     currentAccountId: data.commissionAccountId,
                     type: 'BORROW',
                     amount: data.commissionAmount,
-                    balanceAfter: ca.balance,
+                    currency: 'ARS',
+                    balanceAfterARS: ca.balanceARS,
+                    balanceAfterUSD: ca.balanceUSD,
                     description: `Comisión retiro USD digital (Op: ${operation.id.slice(-6)})`,
                 },
             });

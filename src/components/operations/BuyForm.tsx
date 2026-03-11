@@ -21,27 +21,37 @@ interface BuyFormProps {
     onSuccess: () => void;
 }
 
+type PaymentType = 'CASH' | 'TRANSFER' | 'HYBRID';
+
 export function BuyForm({ accounts, currentAccounts, onSuccess }: BuyFormProps) {
     const arsAccounts = accounts.filter((a: any) => a.currency === 'ARS' && a.ownership === 'PROPIO');
     const usdAccounts = accounts.filter((a: any) => a.currency === 'USD' && a.ownership === 'PROPIO');
 
     // Filter digital origins to only accounts marked as "isPurchasing"
     const digitalArsAccounts = arsAccounts.filter((a: any) => a.isPurchasing === true || a.type === 'CASH');
+    const bankAccounts = arsAccounts.filter((a: any) => a.type === 'BANK' || a.type === 'VIRTUAL');
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [isDigital, setIsDigital] = useState(false);
+    const [paymentType, setPaymentType] = useState<PaymentType>('CASH');
 
     const [formData, setFormData] = useState({
         usdAmount: '',
         exchangeRate: '',
-        arsAccountId: arsAccounts.find((a: any) => a.type === 'CASH')?.id || arsAccounts[0]?.id || '',
+        cashAccountId: arsAccounts.find((a: any) => a.type === 'CASH')?.id || arsAccounts[0]?.id || '',
+        transferAccountId: '',
+        cashAmount: '',
         usdAccountId: usdAccounts.find((a: any) => a.type === 'VIRTUAL')?.id || usdAccounts[0]?.id || '',
         notes: '',
     });
 
     const calculatedARS = formData.usdAmount && formData.exchangeRate
         ? parseFloat(formData.usdAmount) * parseFloat(formData.exchangeRate)
+        : 0;
+
+    const remainingForTransfer = paymentType === 'HYBRID' && formData.cashAmount
+        ? calculatedARS - parseFloat(formData.cashAmount)
         : 0;
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -53,8 +63,14 @@ export function BuyForm({ accounts, currentAccounts, onSuccess }: BuyFormProps) 
             await createBuyOperation({
                 usdAmount: parseFloat(formData.usdAmount),
                 exchangeRate: parseFloat(formData.exchangeRate),
-                arsAccountId: formData.arsAccountId,
                 usdAccountId: formData.usdAccountId,
+                paymentType,
+                cashAccountId: paymentType !== 'TRANSFER' ? formData.cashAccountId : undefined,
+                cashAmount: paymentType === 'CASH' ? calculatedARS :
+                    paymentType === 'HYBRID' ? parseFloat(formData.cashAmount) : undefined,
+                transferAccountId: paymentType !== 'CASH' ? formData.transferAccountId : undefined,
+                transferAmount: paymentType === 'TRANSFER' ? calculatedARS :
+                    paymentType === 'HYBRID' ? remainingForTransfer : undefined,
                 isDigital,
                 notes: formData.notes || undefined,
             });
@@ -135,14 +151,83 @@ export function BuyForm({ accounts, currentAccounts, onSuccess }: BuyFormProps) 
                 </div>
             )}
 
-            {/* ARS Source Account */}
-            <SearchableAccountSelect
-                label={isDigital ? "Banco Origen (Compradoras)" : "Cuenta Pago (ARS)"}
-                accounts={isDigital ? digitalArsAccounts : arsAccounts}
-                value={formData.arsAccountId}
-                onValueChange={(val) => setFormData({ ...formData, arsAccountId: val })}
-                placeholder="Seleccionar cuenta de origen..."
-            />
+            {/* Payment Type */}
+            <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Forma de pago
+                </label>
+                <div className="flex rounded-lg bg-slate-700/50 p-1">
+                    <button
+                        type="button"
+                        onClick={() => setPaymentType('CASH')}
+                        className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${paymentType === 'CASH' ? 'bg-emerald-500 text-white' : 'text-slate-400 hover:text-white'
+                            }`}
+                    >
+                        Efectivo
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setPaymentType('TRANSFER')}
+                        className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${paymentType === 'TRANSFER' ? 'bg-emerald-500 text-white' : 'text-slate-400 hover:text-white'
+                            }`}
+                    >
+                        Transferencia
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setPaymentType('HYBRID')}
+                        className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${paymentType === 'HYBRID' ? 'bg-emerald-500 text-white' : 'text-slate-400 hover:text-white'
+                            }`}
+                    >
+                        Mixto
+                    </button>
+                </div>
+            </div>
+
+            {/* Cash fields */}
+            {(paymentType === 'CASH' || paymentType === 'HYBRID') && (
+                <SearchableAccountSelect
+                    label={isDigital ? "Banco Origen (Compradoras)" : "Cuenta efectivo (ARS)"}
+                    accounts={isDigital ? digitalArsAccounts : arsAccounts.filter((a: any) => a.type === 'CASH')}
+                    value={formData.cashAccountId}
+                    onValueChange={(val) => setFormData({ ...formData, cashAccountId: val })}
+                    placeholder="Seleccionar cuenta de caja..."
+                />
+            )}
+
+            {/* Hybrid: Cash amount */}
+            {paymentType === 'HYBRID' && (
+                <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-1">
+                        Monto en efectivo
+                    </label>
+                    <input
+                        type="number"
+                        step="0.01"
+                        value={formData.cashAmount}
+                        onChange={(e) => setFormData({ ...formData, cashAmount: e.target.value })}
+                        className="w-full px-4 py-3 rounded-lg bg-slate-900/50 border border-slate-600/50 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                        placeholder="400000"
+                        required
+                    />
+                    {remainingForTransfer > 0 && (
+                        <p className="text-xs text-slate-400 mt-1">
+                            Restante por transferencia: {formatARS(remainingForTransfer)}
+                        </p>
+                    )}
+                </div>
+            )}
+
+            {/* Transfer fields */}
+            {(paymentType === 'TRANSFER' || paymentType === 'HYBRID') && (
+                <SearchableAccountSelect
+                    label="Cuenta bancaria (ARS)"
+                    accounts={bankAccounts}
+                    value={formData.transferAccountId}
+                    onValueChange={(val) => setFormData({ ...formData, transferAccountId: val })}
+                    placeholder="Seleccionar cuenta destino..."
+                />
+            )}
 
             {/* USD Destination Account */}
             <SearchableAccountSelect

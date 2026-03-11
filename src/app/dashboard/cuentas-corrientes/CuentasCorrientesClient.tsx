@@ -416,13 +416,19 @@ export function CuentasCorrientesClient({ accounts, physicalAccounts }: CuentasC
                                 </div>
                             )}
 
-                            <SearchableAccountSelect
-                                label="Cuenta Física/Virtual (Afectada)"
-                                accounts={physicalAccounts.filter((acc: any) => acc.currency === currency)}
-                                value={selectedPhysicalAccountId}
-                                onValueChange={setSelectedPhysicalAccountId}
-                                placeholder="Seleccionar cuenta..."
-                            />
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">Cuenta Física/Virtual (Afectada)</label>
+                                <select
+                                    value={selectedPhysicalAccountId}
+                                    onChange={(e) => setSelectedPhysicalAccountId(e.target.value)}
+                                    className="w-full px-4 py-3 rounded-lg bg-slate-900 border border-slate-600 text-white"
+                                >
+                                    <option value="">🔒 Solo registro virtual (sin afectar caja)</option>
+                                    {physicalAccounts.filter((acc: any) => acc.currency === currency).map((acc: any) => (
+                                        <option key={acc.id} value={acc.id}>{acc.name} ({acc.currency})</option>
+                                    ))}
+                                </select>
+                            </div>
 
                             <div>
                                 <label className="block text-sm font-medium text-slate-300 mb-1">Nota / Descripción</label>
@@ -507,13 +513,19 @@ export function CuentasCorrientesClient({ accounts, physicalAccounts }: CuentasC
                                         </select>
                                     </div>
 
-                                    <SearchableAccountSelect
-                                        label="Cuenta Física (Donde ingresa)"
-                                        accounts={physicalAccounts.filter((acc: any) => acc.currency === bulkCurrency)}
-                                        value={bulkTargetAccountId}
-                                        onValueChange={setBulkTargetAccountId}
-                                        placeholder="Seleccionar cuenta..."
-                                    />
+                                    <div>
+                                        <label className="block text-xs uppercase tracking-wider font-medium text-slate-300 mb-1">Cuenta Física (Donde ingresa)</label>
+                                        <select
+                                            value={bulkTargetAccountId}
+                                            onChange={(e) => setBulkTargetAccountId(e.target.value)}
+                                            className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white text-sm"
+                                        >
+                                            <option value="">🔒 Solo registro virtual</option>
+                                            {physicalAccounts.filter((acc: any) => acc.currency === bulkCurrency).map((acc: any) => (
+                                                <option key={acc.id} value={acc.id}>{acc.name} ({acc.currency})</option>
+                                            ))}
+                                        </select>
+                                    </div>
 
                                     <div>
                                         <label className="block text-xs uppercase tracking-wider font-medium text-slate-300 mb-1">Descripción</label>
