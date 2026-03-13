@@ -239,6 +239,8 @@ exports.Prisma.RecaudadoraMovementScalarFieldEnum = {
   recaudadoraId: 'recaudadoraId',
   amount: 'amount',
   description: 'description',
+  paymentDate: 'paymentDate',
+  isVerified: 'isVerified',
   createdAt: 'createdAt'
 };
 

@@ -58,7 +58,7 @@ export function CuentasCorrientesClient({ accounts, physicalAccounts }: CuentasC
     const [bulkCurrency, setBulkCurrency] = useState<'ARS' | 'USD'>('ARS');
     const [bulkDescription, setBulkDescription] = useState('');
     const [bulkTargetAccountId, setBulkTargetAccountId] = useState('');
-    const [parsedBulkAmounts, setParsedBulkAmounts] = useState<Array<{ amount: number; confirmed: boolean }>>([]);
+    const [parsedBulkAmounts, setParsedBulkAmounts] = useState<Array<{ amount: number; confirmed: boolean; paymentDate: string }>>([]);
     const [bulkError, setBulkError] = useState('');
 
     // History state
@@ -165,11 +165,14 @@ export function CuentasCorrientesClient({ accounts, physicalAccounts }: CuentasC
     };
 
     const handleParseBulkAmounts = () => {
-        const lines = bulkRawInput.split(/[\n+]+/).map((l: any) => l.trim()).filter((l: any) => l !== '');
-        const newAmounts = lines.map((l: any) => {
+        const lines = bulkRawInput.split(/[\n+]+/).map((l: string) => l.trim()).filter((l: string) => l !== '');
+        const now = new Date();
+        const localNow = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+
+        const newAmounts = lines.map((l: string) => {
             const amount = parseFloat(l.replace(/,/g, ''));
-            return isNaN(amount) ? null : { amount, confirmed: false };
-        }).filter((d: any) => d !== null) as Array<{ amount: number; confirmed: boolean }>;
+            return isNaN(amount) ? null : { amount, confirmed: false, paymentDate: localNow };
+        }).filter((d): d is { amount: number; confirmed: boolean; paymentDate: string } => d !== null);
 
         setParsedBulkAmounts([...parsedBulkAmounts, ...newAmounts]);
         setBulkRawInput('');
@@ -196,6 +199,11 @@ export function CuentasCorrientesClient({ accounts, physicalAccounts }: CuentasC
                 currency: bulkCurrency,
                 description: bulkDescription || `Recibido masivo ${bulkCurrency}`,
                 targetAccountId: bulkTargetAccountId || undefined,
+                pendingDeposits: parsedBulkAmounts.filter(d => !d.confirmed).map(d => ({
+                    amount: d.amount,
+                    paymentDate: d.paymentDate,
+                    description: bulkDescription || `Recibido masivo ${bulkCurrency} (pendiente)`,
+                })),
             });
             setShowBulkBorrowModal(false);
             setBulkBorrowAccount(null);
@@ -562,16 +570,12 @@ export function CuentasCorrientesClient({ accounts, physicalAccounts }: CuentasC
 
                                     <div>
                                         <label className="block text-xs uppercase tracking-wider font-medium text-slate-300 mb-1">Cuenta Física (Donde ingresa)</label>
-                                        <select
+                                        <SearchableAccountSelect
+                                            accounts={physicalAccounts.filter((acc: any) => acc.currency === bulkCurrency)}
                                             value={bulkTargetAccountId}
-                                            onChange={(e) => setBulkTargetAccountId(e.target.value)}
-                                            className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white text-sm"
-                                        >
-                                            <option value="">🔒 Solo registro virtual</option>
-                                            {physicalAccounts.filter((acc: any) => acc.currency === bulkCurrency).map((acc: any) => (
-                                                <option key={acc.id} value={acc.id}>{acc.name} ({acc.currency})</option>
-                                            ))}
-                                        </select>
+                                            onValueChange={setBulkTargetAccountId}
+                                            placeholder="🔒 Solo registro virtual"
+                                        />
                                     </div>
 
                                     <div>
@@ -583,6 +587,13 @@ export function CuentasCorrientesClient({ accounts, physicalAccounts }: CuentasC
                                             className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white text-sm"
                                             placeholder="Ej: Préstamo Lunes"
                                         />
+                                    </div>
+
+                                    {/* Legend */}
+                                    <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700/50 space-y-1.5 mt-4">
+                                        <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Instrucciones</p>
+                                        <p className="text-xs text-slate-400">✅ <b className="text-emerald-400">Con check</b>: impacta el saldo inmediatamente.</p>
+                                        <p className="text-xs text-slate-400">⏳ <b className="text-amber-400">Sin check</b>: queda como pendiente (genera alerta).</p>
                                     </div>
                                 </div>
 
@@ -596,49 +607,72 @@ export function CuentasCorrientesClient({ accounts, physicalAccounts }: CuentasC
                                             </div>
                                         ) : (
                                             parsedBulkAmounts.map((d, i) => (
-                                                <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-slate-900/50 border border-slate-700/50 transition-all hover:bg-slate-900">
-                                                    <span className="text-sm text-white font-medium">
-                                                        {bulkCurrency === 'ARS' ? formatARS(d.amount) : formatUSD(d.amount)}
-                                                    </span>
-                                                    <div className="flex items-center gap-2">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={d.confirmed}
-                                                            onChange={(e) => {
-                                                                const next = [...parsedBulkAmounts];
-                                                                next[i].confirmed = e.target.checked;
-                                                                setParsedBulkAmounts(next);
-                                                            }}
-                                                            className="w-4 h-4 rounded-md bg-slate-900 border-slate-700 text-red-500 focus:ring-red-500/20"
-                                                        />
-                                                        <button
-                                                            onClick={() => setParsedBulkAmounts(parsedBulkAmounts.filter((_: any, idx: number) => idx !== i))}
-                                                            className="p-1 rounded-md hover:bg-red-500/10 text-slate-600 hover:text-red-400"
-                                                        >
-                                                            <X className="w-4 h-4" />
-                                                        </button>
+                                                <div key={i} className={`p-2 rounded-lg border transition-all hover:bg-slate-900 ${d.confirmed ? 'bg-red-500/5 border-red-500/20' : 'bg-slate-900/50 border-slate-700/50'}`}>
+                                                    <div className="flex items-center justify-between mb-1.5">
+                                                        <span className="text-sm text-white font-medium">
+                                                            {bulkCurrency === 'ARS' ? formatARS(d.amount) : formatUSD(d.amount)}
+                                                        </span>
+                                                        <div className="flex items-center gap-2">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={d.confirmed}
+                                                                onChange={(e) => {
+                                                                    const next = [...parsedBulkAmounts];
+                                                                    next[i].confirmed = e.target.checked;
+                                                                    setParsedBulkAmounts(next);
+                                                                }}
+                                                                className="w-4 h-4 rounded-md bg-slate-900 border-slate-700 text-red-500 focus:ring-red-500/20"
+                                                            />
+                                                            <button
+                                                                onClick={() => setParsedBulkAmounts(parsedBulkAmounts.filter((_: any, idx: number) => idx !== i))}
+                                                                className="p-1 rounded-md hover:bg-red-500/10 text-slate-600 hover:text-red-400"
+                                                            >
+                                                                <X className="w-4 h-4" />
+                                                            </button>
+                                                        </div>
                                                     </div>
+                                                    <input
+                                                        type="datetime-local"
+                                                        value={d.paymentDate}
+                                                        onChange={(e) => {
+                                                            const next = [...parsedBulkAmounts];
+                                                            next[i].paymentDate = e.target.value;
+                                                            setParsedBulkAmounts(next);
+                                                        }}
+                                                        className="w-full px-2 py-1 rounded-md bg-slate-900 border border-slate-700 text-slate-300 text-xs"
+                                                    />
                                                 </div>
                                             ))
                                         )}
+
                                     </div>
 
                                     {parsedBulkAmounts.length > 0 && (
-                                        <div className="mt-4 pt-4 border-t border-slate-700">
-                                            <div className="flex justify-between items-center mb-4 bg-red-500/5 p-3 rounded-xl border border-red-500/10">
-                                                <span className="text-sm text-red-400 font-medium">Total Confirmado:</span>
+                                        <div className="mt-4 pt-4 border-t border-slate-700 space-y-2">
+                                            <div className="flex justify-between items-center bg-red-500/5 p-3 rounded-xl border border-red-500/10">
+                                                <span className="text-sm text-red-400 font-medium">Tot. Confirmado:</span>
                                                 <span className="text-xl font-bold text-red-400">
                                                     {bulkCurrency === 'ARS'
                                                         ? formatARS(parsedBulkAmounts.filter((d: any) => d.confirmed).reduce((s: number, d: any) => s + d.amount, 0))
                                                         : formatUSD(parsedBulkAmounts.filter((d: any) => d.confirmed).reduce((s: number, d: any) => s + d.amount, 0))}
                                                 </span>
                                             </div>
+                                            {parsedBulkAmounts.filter(d => !d.confirmed).length > 0 && (
+                                                <div className="flex justify-between items-center bg-amber-500/5 p-3 rounded-xl border border-amber-500/10">
+                                                    <span className="text-sm text-amber-400 font-medium">Pendientes:</span>
+                                                    <span className="text-xl font-bold text-amber-400">
+                                                        {bulkCurrency === 'ARS'
+                                                            ? formatARS(parsedBulkAmounts.filter(d => !d.confirmed).reduce((s, d) => s + d.amount, 0))
+                                                            : formatUSD(parsedBulkAmounts.filter(d => !d.confirmed).reduce((s, d) => s + d.amount, 0))}
+                                                    </span>
+                                                </div>
+                                            )}
                                             <button
                                                 onClick={handleBulkBorrow}
-                                                disabled={loading || parsedBulkAmounts.filter(d => d.confirmed).length === 0}
+                                                disabled={loading}
                                                 className="w-full py-4 rounded-xl bg-red-600 text-white font-bold hover:bg-red-500 shadow-lg shadow-red-900/20 disabled:opacity-50 transition-all"
                                             >
-                                                {loading ? 'Registrando...' : 'Confirmar Deuda Total'}
+                                                {loading ? 'Registrando...' : 'Confirmar Todo'}
                                             </button>
                                         </div>
                                     )}

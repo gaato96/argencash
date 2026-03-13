@@ -90,6 +90,7 @@ export async function receiveMoney(params: {
     currency: 'ARS' | 'USD';
     description?: string;
     targetAccountId?: string; // Cuenta física donde se acredita la liquidez
+    pendingDeposits?: Array<{ amount: number; paymentDate: string; description: string }>;
 }) {
     const session = await getSessionContext();
     const tenantId = session.user.tenantId!;
@@ -141,7 +142,7 @@ export async function receiveMoney(params: {
         });
 
         // 4. Physical account entry (Liquidez de tercero en cuenta propia)
-        if (params.targetAccountId) {
+        if (params.targetAccountId && params.amount > 0) {
             await tx.accountMovement.create({
                 data: {
                     tenantId: ca.tenantId,
@@ -153,6 +154,28 @@ export async function receiveMoney(params: {
                     description: `Liquidez CC: ${ca.name}`,
                 },
             });
+        }
+
+        // 5. Create Alerts for Pending Deposits
+        if (params.pendingDeposits && params.pendingDeposits.length > 0) {
+            for (const pending of params.pendingDeposits) {
+                await tx.alert.create({
+                    data: {
+                        tenantId: ca.tenantId,
+                        type: 'PENDING_CC_DEPOSIT',
+                        severity: 'WARNING',
+                        message: `Préstamo CC a verificar: ${params.currency === 'ARS' ? pending.amount.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' }) : pending.amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })} en ${ca.name}`,
+                        metadata: JSON.stringify({
+                            currentAccountId: params.currentAccountId,
+                            currency: params.currency,
+                            amount: pending.amount,
+                            paymentDate: pending.paymentDate,
+                            description: pending.description,
+                        }),
+                        status: 'ACTIVE',
+                    },
+                });
+            }
         }
 
         revalidatePath('/dashboard/cuentas-corrientes');
@@ -457,5 +480,83 @@ export async function collectDebt(params: {
         revalidatePath('/dashboard/cuentas-corrientes');
         revalidatePath('/dashboard/cuentas');
         return updatedCa;
+    });
+}
+
+export async function verifyPendingDeposit(alertId: string) {
+    const session = await getSessionContext();
+    const tenantId = session.user.tenantId!;
+
+    const alert = await prisma.alert.findUnique({
+        where: { id: alertId, tenantId },
+    });
+
+    if (!alert || alert.status !== 'ACTIVE') {
+        throw new Error('Alerta no encontrada o ya resuelta');
+    }
+
+    let metadata;
+    try {
+        metadata = JSON.parse(alert.metadata || '{}');
+    } catch {
+        throw new Error('Metadata inválida en la alerta');
+    }
+
+    if (!metadata.currentAccountId || !metadata.amount || !metadata.currency) {
+        throw new Error('Datos incompletos en la alerta');
+    }
+
+    return prisma.$transaction(async (tx: any) => {
+        const cashSession = await tx.cashSession.findFirst({
+            where: { tenantId, status: 'OPEN' },
+        });
+
+        const operation = await tx.operation.create({
+            data: {
+                tenantId,
+                type: 'RECEIVE_CC',
+                mainAmount: metadata.amount,
+                mainCurrency: metadata.currency,
+                createdById: session.user.id,
+                cashSessionId: cashSession?.id,
+                notes: metadata.description || `Recibido CC: ${metadata.currency} (Verificado)`,
+            },
+        });
+
+        const updateData: any = {};
+        if (metadata.currency === 'ARS') {
+            updateData.balanceARS = { decrement: metadata.amount };
+        } else {
+            updateData.balanceUSD = { decrement: metadata.amount };
+        }
+
+        const ca = await tx.currentAccount.update({
+            where: { id: metadata.currentAccountId },
+            data: updateData,
+        });
+
+        await tx.currentAccountMovement.create({
+            data: {
+                currentAccountId: metadata.currentAccountId,
+                type: 'BORROW',
+                amount: metadata.amount,
+                currency: metadata.currency,
+                balanceAfterARS: ca.balanceARS,
+                balanceAfterUSD: ca.balanceUSD,
+                description: metadata.description || `Recibido ${metadata.currency} (Verificado)`,
+                operationId: operation.id,
+            },
+        });
+
+        await tx.alert.update({
+            where: { id: alertId },
+            data: { status: 'RESOLVED', resolvedAt: new Date() },
+        });
+
+        revalidatePath('/dashboard/cuentas-corrientes');
+        revalidatePath('/dashboard/cuentas');
+        revalidatePath('/dashboard');
+        
+        return ca;
     });
 }

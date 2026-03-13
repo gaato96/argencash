@@ -12222,6 +12222,8 @@ export namespace Prisma {
     recaudadoraId: string | null
     amount: number | null
     description: string | null
+    paymentDate: Date | null
+    isVerified: boolean | null
     createdAt: Date | null
   }
 
@@ -12230,6 +12232,8 @@ export namespace Prisma {
     recaudadoraId: string | null
     amount: number | null
     description: string | null
+    paymentDate: Date | null
+    isVerified: boolean | null
     createdAt: Date | null
   }
 
@@ -12238,6 +12242,8 @@ export namespace Prisma {
     recaudadoraId: number
     amount: number
     description: number
+    paymentDate: number
+    isVerified: number
     createdAt: number
     _all: number
   }
@@ -12256,6 +12262,8 @@ export namespace Prisma {
     recaudadoraId?: true
     amount?: true
     description?: true
+    paymentDate?: true
+    isVerified?: true
     createdAt?: true
   }
 
@@ -12264,6 +12272,8 @@ export namespace Prisma {
     recaudadoraId?: true
     amount?: true
     description?: true
+    paymentDate?: true
+    isVerified?: true
     createdAt?: true
   }
 
@@ -12272,6 +12282,8 @@ export namespace Prisma {
     recaudadoraId?: true
     amount?: true
     description?: true
+    paymentDate?: true
+    isVerified?: true
     createdAt?: true
     _all?: true
   }
@@ -12367,6 +12379,8 @@ export namespace Prisma {
     recaudadoraId: string
     amount: number
     description: string | null
+    paymentDate: Date | null
+    isVerified: boolean
     createdAt: Date
     _count: RecaudadoraMovementCountAggregateOutputType | null
     _avg: RecaudadoraMovementAvgAggregateOutputType | null
@@ -12394,6 +12408,8 @@ export namespace Prisma {
     recaudadoraId?: boolean
     amount?: boolean
     description?: boolean
+    paymentDate?: boolean
+    isVerified?: boolean
     createdAt?: boolean
     recaudadora?: boolean | RecaudadoraDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["recaudadoraMovement"]>
@@ -12403,6 +12419,8 @@ export namespace Prisma {
     recaudadoraId?: boolean
     amount?: boolean
     description?: boolean
+    paymentDate?: boolean
+    isVerified?: boolean
     createdAt?: boolean
     recaudadora?: boolean | RecaudadoraDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["recaudadoraMovement"]>
@@ -12412,6 +12430,8 @@ export namespace Prisma {
     recaudadoraId?: boolean
     amount?: boolean
     description?: boolean
+    paymentDate?: boolean
+    isVerified?: boolean
     createdAt?: boolean
     recaudadora?: boolean | RecaudadoraDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["recaudadoraMovement"]>
@@ -12421,10 +12441,12 @@ export namespace Prisma {
     recaudadoraId?: boolean
     amount?: boolean
     description?: boolean
+    paymentDate?: boolean
+    isVerified?: boolean
     createdAt?: boolean
   }
 
-  export type RecaudadoraMovementOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "recaudadoraId" | "amount" | "description" | "createdAt", ExtArgs["result"]["recaudadoraMovement"]>
+  export type RecaudadoraMovementOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "recaudadoraId" | "amount" | "description" | "paymentDate" | "isVerified" | "createdAt", ExtArgs["result"]["recaudadoraMovement"]>
   export type RecaudadoraMovementInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     recaudadora?: boolean | RecaudadoraDefaultArgs<ExtArgs>
   }
@@ -12445,6 +12467,8 @@ export namespace Prisma {
       recaudadoraId: string
       amount: number
       description: string | null
+      paymentDate: Date | null
+      isVerified: boolean
       createdAt: Date
     }, ExtArgs["result"]["recaudadoraMovement"]>
     composites: {}
@@ -12874,6 +12898,8 @@ export namespace Prisma {
     readonly recaudadoraId: FieldRef<"RecaudadoraMovement", 'String'>
     readonly amount: FieldRef<"RecaudadoraMovement", 'Float'>
     readonly description: FieldRef<"RecaudadoraMovement", 'String'>
+    readonly paymentDate: FieldRef<"RecaudadoraMovement", 'DateTime'>
+    readonly isVerified: FieldRef<"RecaudadoraMovement", 'Boolean'>
     readonly createdAt: FieldRef<"RecaudadoraMovement", 'DateTime'>
   }
     
@@ -17960,6 +17986,8 @@ export namespace Prisma {
     recaudadoraId: 'recaudadoraId',
     amount: 'amount',
     description: 'description',
+    paymentDate: 'paymentDate',
+    isVerified: 'isVerified',
     createdAt: 'createdAt'
   };
 
@@ -18916,6 +18944,8 @@ export namespace Prisma {
     recaudadoraId?: StringFilter<"RecaudadoraMovement"> | string
     amount?: FloatFilter<"RecaudadoraMovement"> | number
     description?: StringNullableFilter<"RecaudadoraMovement"> | string | null
+    paymentDate?: DateTimeNullableFilter<"RecaudadoraMovement"> | Date | string | null
+    isVerified?: BoolFilter<"RecaudadoraMovement"> | boolean
     createdAt?: DateTimeFilter<"RecaudadoraMovement"> | Date | string
     recaudadora?: XOR<RecaudadoraScalarRelationFilter, RecaudadoraWhereInput>
   }
@@ -18925,6 +18955,8 @@ export namespace Prisma {
     recaudadoraId?: SortOrder
     amount?: SortOrder
     description?: SortOrderInput | SortOrder
+    paymentDate?: SortOrderInput | SortOrder
+    isVerified?: SortOrder
     createdAt?: SortOrder
     recaudadora?: RecaudadoraOrderByWithRelationInput
   }
@@ -18937,6 +18969,8 @@ export namespace Prisma {
     recaudadoraId?: StringFilter<"RecaudadoraMovement"> | string
     amount?: FloatFilter<"RecaudadoraMovement"> | number
     description?: StringNullableFilter<"RecaudadoraMovement"> | string | null
+    paymentDate?: DateTimeNullableFilter<"RecaudadoraMovement"> | Date | string | null
+    isVerified?: BoolFilter<"RecaudadoraMovement"> | boolean
     createdAt?: DateTimeFilter<"RecaudadoraMovement"> | Date | string
     recaudadora?: XOR<RecaudadoraScalarRelationFilter, RecaudadoraWhereInput>
   }, "id">
@@ -18946,6 +18980,8 @@ export namespace Prisma {
     recaudadoraId?: SortOrder
     amount?: SortOrder
     description?: SortOrderInput | SortOrder
+    paymentDate?: SortOrderInput | SortOrder
+    isVerified?: SortOrder
     createdAt?: SortOrder
     _count?: RecaudadoraMovementCountOrderByAggregateInput
     _avg?: RecaudadoraMovementAvgOrderByAggregateInput
@@ -18962,6 +18998,8 @@ export namespace Prisma {
     recaudadoraId?: StringWithAggregatesFilter<"RecaudadoraMovement"> | string
     amount?: FloatWithAggregatesFilter<"RecaudadoraMovement"> | number
     description?: StringNullableWithAggregatesFilter<"RecaudadoraMovement"> | string | null
+    paymentDate?: DateTimeNullableWithAggregatesFilter<"RecaudadoraMovement"> | Date | string | null
+    isVerified?: BoolWithAggregatesFilter<"RecaudadoraMovement"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"RecaudadoraMovement"> | Date | string
   }
 
@@ -20162,6 +20200,8 @@ export namespace Prisma {
     id?: string
     amount: number
     description?: string | null
+    paymentDate?: Date | string | null
+    isVerified?: boolean
     createdAt?: Date | string
     recaudadora: RecaudadoraCreateNestedOneWithoutMovementsInput
   }
@@ -20171,6 +20211,8 @@ export namespace Prisma {
     recaudadoraId: string
     amount: number
     description?: string | null
+    paymentDate?: Date | string | null
+    isVerified?: boolean
     createdAt?: Date | string
   }
 
@@ -20178,6 +20220,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     amount?: FloatFieldUpdateOperationsInput | number
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isVerified?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     recaudadora?: RecaudadoraUpdateOneRequiredWithoutMovementsNestedInput
   }
@@ -20187,6 +20231,8 @@ export namespace Prisma {
     recaudadoraId?: StringFieldUpdateOperationsInput | string
     amount?: FloatFieldUpdateOperationsInput | number
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isVerified?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -20195,6 +20241,8 @@ export namespace Prisma {
     recaudadoraId: string
     amount: number
     description?: string | null
+    paymentDate?: Date | string | null
+    isVerified?: boolean
     createdAt?: Date | string
   }
 
@@ -20202,6 +20250,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     amount?: FloatFieldUpdateOperationsInput | number
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isVerified?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -20210,6 +20260,8 @@ export namespace Prisma {
     recaudadoraId?: StringFieldUpdateOperationsInput | string
     amount?: FloatFieldUpdateOperationsInput | number
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isVerified?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -21313,6 +21365,8 @@ export namespace Prisma {
     recaudadoraId?: SortOrder
     amount?: SortOrder
     description?: SortOrder
+    paymentDate?: SortOrder
+    isVerified?: SortOrder
     createdAt?: SortOrder
   }
 
@@ -21325,6 +21379,8 @@ export namespace Prisma {
     recaudadoraId?: SortOrder
     amount?: SortOrder
     description?: SortOrder
+    paymentDate?: SortOrder
+    isVerified?: SortOrder
     createdAt?: SortOrder
   }
 
@@ -21333,6 +21389,8 @@ export namespace Prisma {
     recaudadoraId?: SortOrder
     amount?: SortOrder
     description?: SortOrder
+    paymentDate?: SortOrder
+    isVerified?: SortOrder
     createdAt?: SortOrder
   }
 
@@ -25099,6 +25157,8 @@ export namespace Prisma {
     id?: string
     amount: number
     description?: string | null
+    paymentDate?: Date | string | null
+    isVerified?: boolean
     createdAt?: Date | string
   }
 
@@ -25106,6 +25166,8 @@ export namespace Prisma {
     id?: string
     amount: number
     description?: string | null
+    paymentDate?: Date | string | null
+    isVerified?: boolean
     createdAt?: Date | string
   }
 
@@ -25196,6 +25258,8 @@ export namespace Prisma {
     recaudadoraId?: StringFilter<"RecaudadoraMovement"> | string
     amount?: FloatFilter<"RecaudadoraMovement"> | number
     description?: StringNullableFilter<"RecaudadoraMovement"> | string | null
+    paymentDate?: DateTimeNullableFilter<"RecaudadoraMovement"> | Date | string | null
+    isVerified?: BoolFilter<"RecaudadoraMovement"> | boolean
     createdAt?: DateTimeFilter<"RecaudadoraMovement"> | Date | string
   }
 
@@ -26743,6 +26807,8 @@ export namespace Prisma {
     id?: string
     amount: number
     description?: string | null
+    paymentDate?: Date | string | null
+    isVerified?: boolean
     createdAt?: Date | string
   }
 
@@ -26750,6 +26816,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     amount?: FloatFieldUpdateOperationsInput | number
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isVerified?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -26757,6 +26825,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     amount?: FloatFieldUpdateOperationsInput | number
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isVerified?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -26764,6 +26834,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     amount?: FloatFieldUpdateOperationsInput | number
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isVerified?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 

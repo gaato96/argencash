@@ -26,6 +26,34 @@ export async function getRecaudadoras(tenantId: string) {
     });
 }
 
+export async function getPendingDeposits(recaudadoraId: string) {
+    await getSessionContext();
+    return prisma.recaudadoraMovement.findMany({
+        where: {
+            recaudadoraId,
+            isVerified: false,
+        },
+        orderBy: { createdAt: 'desc' },
+    });
+}
+
+export async function getPendingDepositCounts(tenantId: string) {
+    await getSessionContext();
+    const recaudadoras = await prisma.recaudadora.findMany({
+        where: { tenantId, isActive: true },
+        select: { id: true },
+    });
+
+    const counts: Record<string, number> = {};
+    for (const rec of recaudadoras) {
+        const count = await prisma.recaudadoraMovement.count({
+            where: { recaudadoraId: rec.id, isVerified: false },
+        });
+        if (count > 0) counts[rec.id] = count;
+    }
+    return counts;
+}
+
 export async function createRecaudadora(data: {
     clientName: string;
 }) {
@@ -50,8 +78,8 @@ export async function createRecaudadora(data: {
 
 export async function recordRecaudadoraDeposit(data: {
     recaudadoraId: string;
-    deposits: Array<{ amount: number; description?: string }>;
-    targetAccountId?: string; // Optional: where the money physically entered
+    deposits: Array<{ amount: number; description?: string; paymentDate?: string; confirmed: boolean }>;
+    targetAccountId?: string;
 }) {
     const session = await getSessionContext();
     if (!session.user.tenantId) throw new Error('Tenant no encontrado');
@@ -62,34 +90,69 @@ export async function recordRecaudadoraDeposit(data: {
     });
     if (!recaudadora) throw new Error('Recaudadora no encontrada');
 
-    const totalAmount = data.deposits.reduce((sum, d) => sum + d.amount, 0);
+    const confirmedDeposits = data.deposits.filter(d => d.confirmed);
+    const pendingDeposits = data.deposits.filter(d => !d.confirmed);
+    const confirmedTotal = confirmedDeposits.reduce((sum, d) => sum + d.amount, 0);
 
     await prisma.$transaction(async (tx: any) => {
-        // 1. Record movements in Recaudadora (Debt increases)
-        for (const deposit of data.deposits) {
+        // 1. Record confirmed movements
+        for (const deposit of confirmedDeposits) {
             await tx.recaudadoraMovement.create({
                 data: {
                     recaudadoraId: data.recaudadoraId,
                     amount: deposit.amount,
                     description: deposit.description || 'Cobranza masiva',
+                    paymentDate: deposit.paymentDate ? new Date(deposit.paymentDate) : null,
+                    isVerified: true,
                 },
             });
         }
 
-        // 2. Update Accumulated
-        await tx.recaudadora.update({
-            where: { id: data.recaudadoraId },
-            data: { dailyAccumulated: { increment: totalAmount } },
-        });
+        // 2. Record pending (unverified) movements
+        for (const deposit of pendingDeposits) {
+            await tx.recaudadoraMovement.create({
+                data: {
+                    recaudadoraId: data.recaudadoraId,
+                    amount: deposit.amount,
+                    description: deposit.description || 'Cobranza masiva (pendiente)',
+                    paymentDate: deposit.paymentDate ? new Date(deposit.paymentDate) : null,
+                    isVerified: false,
+                },
+            });
 
-        // 3. Physical account entry (Liquidity IN)
-        if (data.targetAccountId) {
+            // Create alert for pending deposit
+            await tx.alert.create({
+                data: {
+                    tenantId,
+                    type: 'PENDING_DEPOSIT',
+                    severity: 'WARNING',
+                    message: `Depósito pendiente de verificar: ${deposit.amount.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })} en ${recaudadora.clientName}`,
+                    metadata: JSON.stringify({
+                        recaudadoraId: data.recaudadoraId,
+                        amount: deposit.amount,
+                        paymentDate: deposit.paymentDate,
+                    }),
+                    status: 'ACTIVE',
+                },
+            });
+        }
+
+        // 3. Update Accumulated (only confirmed)
+        if (confirmedTotal > 0) {
+            await tx.recaudadora.update({
+                where: { id: data.recaudadoraId },
+                data: { dailyAccumulated: { increment: confirmedTotal } },
+            });
+        }
+
+        // 4. Physical account entry (only confirmed total)
+        if (data.targetAccountId && confirmedTotal > 0) {
             await tx.accountMovement.create({
                 data: {
                     tenantId,
                     accountId: data.targetAccountId,
                     currency: 'ARS',
-                    amount: totalAmount,
+                    amount: confirmedTotal,
                     type: 'OPERATION',
                     description: `Recaudación ${recaudadora.clientName}`,
                 },
@@ -101,10 +164,63 @@ export async function recordRecaudadoraDeposit(data: {
     revalidatePath('/dashboard/cuentas');
 }
 
+export async function verifyRecaudadoraDeposit(movementId: string) {
+    const session = await getSessionContext();
+    if (!session.user.tenantId) throw new Error('Tenant no encontrado');
+    const tenantId = session.user.tenantId;
+
+    const movement = await prisma.recaudadoraMovement.findUnique({
+        where: { id: movementId },
+        include: { recaudadora: true },
+    });
+
+    if (!movement) throw new Error('Movimiento no encontrado');
+    if (movement.isVerified) throw new Error('Ya fue verificado');
+
+    await prisma.$transaction(async (tx: any) => {
+        // 1. Mark as verified
+        await tx.recaudadoraMovement.update({
+            where: { id: movementId },
+            data: { isVerified: true },
+        });
+
+        // 2. Add to accumulated
+        await tx.recaudadora.update({
+            where: { id: movement.recaudadoraId },
+            data: { dailyAccumulated: { increment: movement.amount } },
+        });
+
+        // 3. Resolve related alerts
+        const alerts = await tx.alert.findMany({
+            where: {
+                tenantId,
+                type: 'PENDING_DEPOSIT',
+                status: 'ACTIVE',
+            },
+        });
+
+        for (const alert of alerts) {
+            try {
+                const metadata = JSON.parse(alert.metadata || '{}');
+                if (metadata.recaudadoraId === movement.recaudadoraId && metadata.amount === movement.amount) {
+                    await tx.alert.update({
+                        where: { id: alert.id },
+                        data: { status: 'RESOLVED', resolvedAt: new Date() },
+                    });
+                    break;
+                }
+            } catch { /* skip invalid metadata */ }
+        }
+    });
+
+    revalidatePath('/dashboard/recaudadoras');
+    revalidatePath('/dashboard/cuentas');
+}
+
 export async function liquidateRecaudadora(data: {
     recaudadoraId: string;
-    destinationAccountId: string;
-    commissionRate: number; // Dynamic: set at liquidation time
+    payments: Array<{ accountId: string; amount: number }>;
+    commissionRate: number;
 }) {
     const session = await getSessionContext();
     if (!session.user.tenantId) throw new Error('Tenant no encontrado');
@@ -126,6 +242,12 @@ export async function liquidateRecaudadora(data: {
     const netAmount = amountToLiquidate - commission;
     const currency = 'ARS';
 
+    // Validate payments sum
+    const paymentsTotal = data.payments.reduce((sum, p) => sum + p.amount, 0);
+    if (Math.abs(paymentsTotal - netAmount) > 0.01) {
+        throw new Error(`La suma de pagos (${paymentsTotal.toFixed(2)}) no coincide con el neto a liquidar (${netAmount.toFixed(2)})`);
+    }
+
     const result = await prisma.$transaction(async (tx: any) => {
         // 1. Liquidation operation
         const operation = await tx.operation.create({
@@ -141,18 +263,20 @@ export async function liquidateRecaudadora(data: {
             },
         });
 
-        // 2. DEBIT Net Amount (We pay client)
-        await tx.accountMovement.create({
-            data: {
-                tenantId,
-                accountId: data.destinationAccountId,
-                currency,
-                amount: -netAmount,
-                type: 'OPERATION',
-                referenceId: operation.id,
-                description: `Pago Liquidación ${recaudadora.clientName} (neto)`,
-            },
-        });
+        // 2. DEBIT each payment from corresponding account
+        for (const payment of data.payments) {
+            await tx.accountMovement.create({
+                data: {
+                    tenantId,
+                    accountId: payment.accountId,
+                    currency,
+                    amount: -payment.amount,
+                    type: 'OPERATION',
+                    referenceId: operation.id,
+                    description: `Pago Liquidación ${recaudadora.clientName} (neto parcial)`,
+                },
+            });
+        }
 
         // 3. Commission Income (Profit)
         if (commission > 0) {

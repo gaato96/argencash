@@ -181,10 +181,13 @@ model RecaudadoraMovement {
   recaudadoraId String
   amount        Float
   description   String?
+  paymentDate   DateTime?
+  isVerified    Boolean     @default(false)
   createdAt     DateTime    @default(now())
   recaudadora   Recaudadora @relation(fields: [recaudadoraId], references: [id])
 
   @@index([recaudadoraId])
+  @@index([isVerified])
 }
 
 model CurrentAccount {
