@@ -59,11 +59,7 @@ export async function createBuyOperation(data: {
     usdAmount: number;
     exchangeRate: number;
     usdAccountId: string;        // Account we receive USD into
-    paymentType: 'CASH' | 'TRANSFER' | 'HYBRID';
-    cashAccountId?: string;
-    cashAmount?: number;
-    transferAccountId?: string;
-    transferAmount?: number;
+    payments: Array<{ accountId: string; amount: number }>; // Multiple origins
     isDigital?: boolean;         // If true, check for surplus
     thirdPartyAccountId?: string; // For digital: account we sent ARS to
     arsAmountSent?: number;
@@ -113,15 +109,29 @@ export async function createBuyOperation(data: {
         }
     }
 
-    // Create operation with movements in transaction
-    // Validate amounts for hybrid
-    if (data.paymentType === 'HYBRID') {
-        const cashAmt = data.cashAmount || 0;
-        const transferAmt = data.transferAmount || 0;
-        if (Math.abs((cashAmt + transferAmt) - arsAmount) > 1) {
-            throw new Error('La suma del efectivo y transferencia debe ser igual al total');
-        }
+    // Validate payments total
+    const totalPayments = data.payments.reduce((acc, p) => acc + p.amount, 0);
+    if (Math.abs(totalPayments - arsAmount) > 1) {
+        throw new Error(`La suma de los pagos (${totalPayments}) debe ser igual al total a pagar (${arsAmount})`);
     }
+
+    // Get account details to categorize amounts (Cash vs Transfer)
+    const accountIds = data.payments.map(p => p.accountId);
+    const originAccounts = await prisma.account.findMany({
+        where: { id: { in: accountIds } }
+    });
+
+    let totalCashAmount = 0;
+    let totalTransferAmount = 0;
+
+    data.payments.forEach(payment => {
+        const acc = originAccounts.find(a => a.id === payment.accountId);
+        if (acc?.type === 'CASH') {
+            totalCashAmount += payment.amount;
+        } else {
+            totalTransferAmount += payment.amount;
+        }
+    });
 
     const result = await prisma.$transaction(async (tx: any) => {
         // Create operation
@@ -133,8 +143,8 @@ export async function createBuyOperation(data: {
                 mainCurrency: 'USD',
                 secondaryAmount: arsAmount,
                 exchangeRate: data.exchangeRate,
-                cashAmount: data.cashAmount,
-                transferAmount: data.transferAmount,
+                cashAmount: totalCashAmount,
+                transferAmount: totalTransferAmount,
                 createdById: session.user.id,
                 cashSessionId: cashSession.id,
                 notes: data.notes,
@@ -143,58 +153,20 @@ export async function createBuyOperation(data: {
             },
         });
 
-        // 1. Debit ARS based on payment type
-        if (data.paymentType === 'CASH' && data.cashAccountId) {
+        // 1. Debit ARS based on payment lines
+        for (const payment of data.payments) {
+            if (payment.amount <= 0) continue;
             await tx.accountMovement.create({
                 data: {
                     tenantId,
-                    accountId: data.cashAccountId,
+                    accountId: payment.accountId,
                     currency: 'ARS',
-                    amount: -arsAmount,
+                    amount: -payment.amount,
                     type: 'OPERATION',
                     referenceId: operation.id,
-                    description: `Compra USD ${data.usdAmount} @ ${data.exchangeRate} (efectivo)`,
+                    description: `Compra USD ${data.usdAmount} @ ${data.exchangeRate}`,
                 },
             });
-        } else if (data.paymentType === 'TRANSFER' && data.transferAccountId) {
-            await tx.accountMovement.create({
-                data: {
-                    tenantId,
-                    accountId: data.transferAccountId,
-                    currency: 'ARS',
-                    amount: -arsAmount,
-                    type: 'OPERATION',
-                    referenceId: operation.id,
-                    description: `Compra USD ${data.usdAmount} @ ${data.exchangeRate} (transferencia)`,
-                },
-            });
-        } else if (data.paymentType === 'HYBRID') {
-            if (data.cashAccountId && data.cashAmount) {
-                await tx.accountMovement.create({
-                    data: {
-                        tenantId,
-                        accountId: data.cashAccountId,
-                        currency: 'ARS',
-                        amount: -data.cashAmount,
-                        type: 'OPERATION',
-                        referenceId: operation.id,
-                        description: `Compra USD ${data.usdAmount} (parte efectivo)`,
-                    },
-                });
-            }
-            if (data.transferAccountId && data.transferAmount) {
-                await tx.accountMovement.create({
-                    data: {
-                        tenantId,
-                        accountId: data.transferAccountId,
-                        currency: 'ARS',
-                        amount: -data.transferAmount,
-                        type: 'OPERATION',
-                        referenceId: operation.id,
-                        description: `Compra USD ${data.usdAmount} (parte transferencia)`,
-                    },
-                });
-            }
         }
 
         // 2. Credit USD to destination account
@@ -261,13 +233,7 @@ export async function createSellOperation(data: {
     usdAmount: number;
     exchangeRate: number;
     usdAccountId: string;          // Account we take USD from
-    paymentType: 'CASH' | 'TRANSFER' | 'HYBRID';
-    // For CASH or HYBRID
-    cashAccountId?: string;
-    cashAmount?: number;
-    // For TRANSFER or HYBRID
-    transferAccountId?: string;
-    transferAmount?: number;
+    payments: Array<{ accountId: string; amount: number }>; // Multiple destination accounts for the ARS
     notes?: string;
 }) {
     const session = await getSessionContext();
@@ -288,27 +254,42 @@ export async function createSellOperation(data: {
         throw new Error('No hay caja abierta. Debe abrir la caja primero.');
     }
 
-    // Validate amounts for hybrid
-    if (data.paymentType === 'HYBRID') {
-        const cashAmt = data.cashAmount || 0;
-        const transferAmt = data.transferAmount || 0;
-        if (Math.abs((cashAmt + transferAmt) - totalARS) > 1) {
-            throw new Error('La suma del efectivo y transferencia debe ser igual al total');
-        }
+    // Validate payments total
+    const totalPayments = data.payments.reduce((acc, p) => acc + p.amount, 0);
+    if (Math.abs(totalPayments - totalARS) > 1) {
+        throw new Error(`La suma de los cobros (${totalPayments}) debe ser igual al total a cobrar (${totalARS})`);
     }
+
+    // Categorize
+    const accountIds = data.payments.map(p => p.accountId);
+    const destinationAccounts = await prisma.account.findMany({
+        where: { id: { in: accountIds } }
+    });
+
+    let totalCashAmount = 0;
+    let totalTransferAmount = 0;
+
+    data.payments.forEach(payment => {
+        const acc = destinationAccounts.find(a => a.id === payment.accountId);
+        if (acc?.type === 'CASH') {
+            totalCashAmount += payment.amount;
+        } else {
+            totalTransferAmount += payment.amount;
+        }
+    });
 
     const result = await prisma.$transaction(async (tx: any) => {
         // Create operation
         const operation = await tx.operation.create({
             data: {
                 tenantId,
-                type: data.paymentType === 'HYBRID' ? 'VENTA_HIBRIDA' : 'VENTA_USD',
+                type: data.payments.length > 1 ? 'VENTA_HIBRIDA' : 'VENTA_USD',
                 mainAmount: data.usdAmount,
                 mainCurrency: 'USD',
                 secondaryAmount: totalARS,
                 exchangeRate: data.exchangeRate,
-                cashAmount: data.cashAmount,
-                transferAmount: data.transferAmount,
+                cashAmount: totalCashAmount,
+                transferAmount: totalTransferAmount,
                 createdById: session.user.id,
                 cashSessionId: cashSession.id,
                 notes: data.notes,
@@ -328,60 +309,20 @@ export async function createSellOperation(data: {
             },
         });
 
-        // 2. Credit ARS based on payment type
-        if (data.paymentType === 'CASH' && data.cashAccountId) {
+        // 2. Credit ARS to destination accounts
+        for (const payment of data.payments) {
+            if (payment.amount <= 0) continue;
             await tx.accountMovement.create({
                 data: {
                     tenantId,
-                    accountId: data.cashAccountId,
+                    accountId: payment.accountId,
                     currency: 'ARS',
-                    amount: totalARS,
+                    amount: payment.amount,
                     type: 'OPERATION',
                     referenceId: operation.id,
-                    description: `Venta USD ${data.usdAmount} (efectivo)`,
+                    description: `Venta USD ${data.usdAmount} @ ${data.exchangeRate}`,
                 },
             });
-        } else if (data.paymentType === 'TRANSFER' && data.transferAccountId) {
-            await tx.accountMovement.create({
-                data: {
-                    tenantId,
-                    accountId: data.transferAccountId,
-                    currency: 'ARS',
-                    amount: totalARS,
-                    type: 'OPERATION',
-                    referenceId: operation.id,
-                    description: `Venta USD ${data.usdAmount} (transferencia)`,
-                },
-            });
-        } else if (data.paymentType === 'HYBRID') {
-            // Cash portion
-            if (data.cashAccountId && data.cashAmount) {
-                await tx.accountMovement.create({
-                    data: {
-                        tenantId,
-                        accountId: data.cashAccountId,
-                        currency: 'ARS',
-                        amount: data.cashAmount,
-                        type: 'OPERATION',
-                        referenceId: operation.id,
-                        description: `Venta USD ${data.usdAmount} (parte efectivo)`,
-                    },
-                });
-            }
-            // Transfer portion
-            if (data.transferAccountId && data.transferAmount) {
-                await tx.accountMovement.create({
-                    data: {
-                        tenantId,
-                        accountId: data.transferAccountId,
-                        currency: 'ARS',
-                        amount: data.transferAmount,
-                        type: 'OPERATION',
-                        referenceId: operation.id,
-                        description: `Venta USD ${data.usdAmount} (parte transferencia)`,
-                    },
-                });
-            }
         }
 
         // 3. Update USD stock (reduce remaining using FIFO)
@@ -417,7 +358,7 @@ export async function createSellOperation(data: {
 export async function createTransferOperation(data: {
     amount: number;
     currency: 'ARS' | 'USD';
-    fromAccountId: string;
+    fromPayments: Array<{ accountId: string; amount: number }>;
     toAccountId: string;
     notes?: string;
 }) {
@@ -433,6 +374,11 @@ export async function createTransferOperation(data: {
         where: { tenantId, status: 'OPEN' },
     });
 
+    const totalFromPayments = data.fromPayments.reduce((acc, p) => acc + p.amount, 0);
+    if (Math.abs(totalFromPayments - data.amount) > 1) {
+        throw new Error(`La suma de los orígenes (${totalFromPayments}) debe ser igual al monto a transferir (${data.amount})`);
+    }
+
     const result = await prisma.$transaction(async (tx: any) => {
         const operation = await tx.operation.create({
             data: {
@@ -446,18 +392,21 @@ export async function createTransferOperation(data: {
             },
         });
 
-        // Debit from source
-        await tx.accountMovement.create({
-            data: {
-                tenantId,
-                accountId: data.fromAccountId,
-                currency: data.currency,
-                amount: -data.amount,
-                type: 'TRANSFER',
-                referenceId: operation.id,
-                description: `Transferencia saliente`,
-            },
-        });
+        // Debit from sources
+        for (const payment of data.fromPayments) {
+            if (payment.amount <= 0) continue;
+            await tx.accountMovement.create({
+                data: {
+                    tenantId,
+                    accountId: payment.accountId,
+                    currency: data.currency,
+                    amount: -payment.amount,
+                    type: 'TRANSFER',
+                    referenceId: operation.id,
+                    description: `Transferencia saliente`,
+                },
+            });
+        }
 
         // Credit to destination
         await tx.accountMovement.create({
