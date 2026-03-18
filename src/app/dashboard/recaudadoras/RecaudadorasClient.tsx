@@ -13,6 +13,7 @@ import {
     AlertTriangle,
     CheckCircle2,
     Clock,
+    History,
     Trash2,
 } from 'lucide-react';
 
@@ -64,6 +65,7 @@ export function RecaudadorasClient({ recaudadoras, accounts, pendingCounts }: Re
     const [showLiquidateModal, setShowLiquidateModal] = useState(false);
     const [showDepositModal, setShowDepositModal] = useState(false);
     const [showPendingModal, setShowPendingModal] = useState(false);
+    const [showHistoryModal, setShowHistoryModal] = useState(false);
     const [selectedRecaudadora, setSelectedRecaudadora] = useState<Recaudadora | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -89,6 +91,14 @@ export function RecaudadorasClient({ recaudadoras, accounts, pendingCounts }: Re
     // Pending deposits
     const [pendingMovements, setPendingMovements] = useState<PendingMovement[]>([]);
     const [pendingLoading, setPendingLoading] = useState(false);
+
+    // History
+    const [historyMovements, setHistoryMovements] = useState<any[]>([]);
+    const [historyLoading, setHistoryLoading] = useState(false);
+    const [historyFilters, setHistoryFilters] = useState<{ dateFrom: string; dateTo: string }>({
+        dateFrom: '',
+        dateTo: '',
+    });
 
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -227,6 +237,38 @@ export function RecaudadorasClient({ recaudadoras, accounts, pendingCounts }: Re
         }
     };
 
+    const openHistoryModal = async (rec: Recaudadora) => {
+        setSelectedRecaudadora(rec);
+        setHistoryFilters({ dateFrom: '', dateTo: '' });
+        setShowHistoryModal(true);
+        fetchHistory(rec.id);
+    };
+
+    const fetchHistory = async (recId: string, filters?: { dateFrom: string; dateTo: string }) => {
+        setHistoryLoading(true);
+        try {
+            // We need to import getRecaudadoraMovements at the top. Let's assume it is imported.
+            const data = await import('@/lib/actions/recaudadoras').then(m => m.getRecaudadoraMovements(recId, {
+                dateFrom: filters?.dateFrom ? new Date(filters.dateFrom + 'T00:00:00') : undefined,
+                dateTo: filters?.dateTo ? new Date(filters.dateTo + 'T23:59:59') : undefined,
+            }));
+            setHistoryMovements(data);
+        } catch (err) {
+            console.error('Error fetching history:', err);
+        } finally {
+            setHistoryLoading(false);
+        }
+    };
+
+    const handleHistoryFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        const newFilters = { ...historyFilters, [name]: value };
+        setHistoryFilters(newFilters);
+        if (selectedRecaudadora) {
+            fetchHistory(selectedRecaudadora.id, newFilters);
+        }
+    };
+
     const addPaymentLine = () => {
         setPaymentLines([...paymentLines, { accountId: '', amount: '' }]);
     };
@@ -355,10 +397,17 @@ export function RecaudadorasClient({ recaudadoras, accounts, pendingCounts }: Re
                                             setShowLiquidateModal(true);
                                         }}
                                         disabled={rec.dailyAccumulated <= 0}
-                                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-xs sm:text-sm rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-xs sm:text-sm rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         <ArrowUpRight className="w-4 h-4" />
-                                        Liquidar
+                                        <span>Liquidar</span>
+                                    </button>
+                                    <button
+                                        onClick={() => openHistoryModal(rec)}
+                                        className="flex items-center justify-center p-2 text-xs sm:text-sm rounded-lg bg-slate-700/50 text-slate-300 border border-slate-600/50 hover:bg-slate-700 transition-all active:scale-[0.98]"
+                                        title="Historial de movimientos"
+                                    >
+                                        <History className="w-4 h-4" />
                                     </button>
                                 </div>
                             </div>
@@ -501,13 +550,12 @@ export function RecaudadorasClient({ recaudadoras, accounts, pendingCounts }: Re
                                 ))}
 
                                 {/* Remaining indicator */}
-                                <div className={`p-2 rounded-lg text-xs font-medium text-center ${
-                                    Math.abs(getRemainingAmount()) < 0.01
+                                <div className={`p-2 rounded-lg text-xs font-medium text-center ${Math.abs(getRemainingAmount()) < 0.01
                                         ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                                         : getRemainingAmount() > 0
                                             ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
                                             : 'bg-red-500/10 text-red-400 border border-red-500/20'
-                                }`}>
+                                    }`}>
                                     {Math.abs(getRemainingAmount()) < 0.01
                                         ? '✓ Monto completo asignado'
                                         : getRemainingAmount() > 0
@@ -732,6 +780,108 @@ export function RecaudadorasClient({ recaudadoras, accounts, pendingCounts }: Re
                                         </div>
                                     );
                                 })
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* History Modal */}
+            {showHistoryModal && selectedRecaudadora && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="w-full max-w-3xl bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
+                        <div className="flex items-center justify-between p-4 border-b border-slate-700 shrink-0">
+                            <div>
+                                <h2 className="text-lg font-semibold text-white">Historial de Movimientos</h2>
+                                <p className="text-sm text-slate-400">{selectedRecaudadora.clientName}</p>
+                            </div>
+                            <button onClick={() => setShowHistoryModal(false)} className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {/* Filters */}
+                        <div className="p-4 border-b border-slate-700 bg-slate-800/80 shrink-0">
+                            <div className="flex flex-wrap items-end gap-4">
+                                <div>
+                                    <label className="block text-xs font-medium text-slate-400 mb-1">Desde</label>
+                                    <input
+                                        type="date"
+                                        name="dateFrom"
+                                        value={historyFilters.dateFrom}
+                                        onChange={handleHistoryFilterChange}
+                                        className="px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-slate-400 mb-1">Hasta</label>
+                                    <input
+                                        type="date"
+                                        name="dateTo"
+                                        value={historyFilters.dateTo}
+                                        onChange={handleHistoryFilterChange}
+                                        className="px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                                    />
+                                </div>
+                                <div className="ml-auto">
+                                    {(historyFilters.dateFrom || historyFilters.dateTo) && (
+                                        <button
+                                            onClick={() => {
+                                                setHistoryFilters({ dateFrom: '', dateTo: '' });
+                                                fetchHistory(selectedRecaudadora.id, { dateFrom: '', dateTo: '' });
+                                            }}
+                                            className="text-xs text-slate-400 hover:text-white underline"
+                                        >
+                                            Limpiar filtros
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* History List */}
+                        <div className="overflow-y-auto p-4 flex-1 space-y-3">
+                            {historyLoading ? (
+                                <div className="py-8 text-center text-slate-400">Cargando historial...</div>
+                            ) : historyMovements.length === 0 ? (
+                                <div className="py-8 text-center bg-slate-900/50 rounded-xl border border-slate-700/50">
+                                    <p className="text-slate-400">No se encontraron movimientos{historyFilters.dateFrom || historyFilters.dateTo ? ' en este rango de fechas' : ''}.</p>
+                                </div>
+                            ) : (
+                                historyMovements.map((mov) => (
+                                    <div key={mov.id} className="flex items-center justify-between p-4 rounded-xl bg-slate-900/50 border border-slate-700/50">
+                                        <div className="flex items-center gap-4">
+                                            <div className="shrink-0 pt-1">
+                                                {mov.isVerified ? (
+                                                    <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                                                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                                                    </div>
+                                                ) : (
+                                                    <div className="w-8 h-8 rounded-full bg-amber-500/10 flex items-center justify-center" title="Pendiente de verificación">
+                                                        <Clock className="w-4 h-4 text-amber-400" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-slate-200">{mov.description || 'Depósito recurrente'}</p>
+                                                <div className="flex items-center gap-3 text-xs text-slate-400 mt-1">
+                                                    <span>Cr: {new Date(mov.createdAt).toLocaleString()}</span>
+                                                    {mov.paymentDate && (
+                                                        <span className="text-slate-300">| F. Pago: {new Date(mov.paymentDate).toLocaleDateString()}</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="text-right shrink-0 ml-4">
+                                            <p className={`font-bold ${mov.amount > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                                {mov.amount > 0 ? '+' : ''}{formatARS(mov.amount)}
+                                            </p>
+                                            <p className="text-[10px] uppercase font-bold text-slate-500 mt-1">
+                                                {mov.isVerified ? 'VERIFICADO' : 'PENDIENTE'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))
                             )}
                         </div>
                     </div>

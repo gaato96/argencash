@@ -37,6 +37,30 @@ export async function getPendingDeposits(recaudadoraId: string) {
     });
 }
 
+export async function getRecaudadoraMovements(recaudadoraId: string, customOptions?: { dateFrom?: Date; dateTo?: Date }) {
+    await getSessionContext();
+    const whereClause: any = { recaudadoraId };
+
+    if (customOptions?.dateFrom || customOptions?.dateTo) {
+        whereClause.createdAt = {};
+        if (customOptions.dateFrom) {
+            whereClause.createdAt.gte = customOptions.dateFrom;
+        }
+        if (customOptions.dateTo) {
+            // Set end of day for dateTo
+            const toEndOfDay = new Date(customOptions.dateTo);
+            toEndOfDay.setHours(23, 59, 59, 999);
+            whereClause.createdAt.lte = toEndOfDay;
+        }
+    }
+
+    return prisma.recaudadoraMovement.findMany({
+        where: whereClause,
+        orderBy: { createdAt: 'desc' },
+        take: customOptions?.dateFrom || customOptions?.dateTo ? undefined : 50, // Limit unless filtering
+    });
+}
+
 export async function getPendingDepositCounts(tenantId: string) {
     await getSessionContext();
     const recaudadoras = await prisma.recaudadora.findMany({

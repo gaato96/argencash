@@ -102,3 +102,16 @@
     at Array.toJSON (C:\Users\gaato\.gemini\antigravity\scratch\finance-manager-pro\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:28935)
     at stringify (<anonymous>)
     at eX (C:\Users\gaato\.gemini\antigravity\scratch\finance-manager-pro\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:42569)
+2026-03-18T04:21:26.249Z : [ADMIN-PAGE] AdminDashboardPage starting...
+2026-03-18T04:21:26.254Z : [ADMIN-PAGE] ADMIN PAGE ERROR: Dynamic server usage: Route /admin couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+2026-03-18T04:21:26.255Z : [ADMIN-PAGE] STACK: Error: Dynamic server usage: Route /admin couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at t (C:\Users\gaato\.gemini\antigravity\scratch\finance-manager-pro\.next\server\chunks\ssr\_372d6ca6._.js:164:33548)
+    at m (C:\Users\gaato\.gemini\antigravity\scratch\finance-manager-pro\.next\server\chunks\ssr\_372d6ca6._.js:167:16998)
+    at h (C:\Users\gaato\.gemini\antigravity\scratch\finance-manager-pro\.next\server\chunks\ssr\_372d6ca6._.js:167:24535)
+    at i (C:\Users\gaato\.gemini\antigravity\scratch\finance-manager-pro\.next\server\chunks\ssr\[root-of-the-server]__5972166e._.js:1:3149)
+    at eC (C:\Users\gaato\.gemini\antigravity\scratch\finance-manager-pro\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:27277)
+    at e (C:\Users\gaato\.gemini\antigravity\scratch\finance-manager-pro\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:31392)
+    at eU (C:\Users\gaato\.gemini\antigravity\scratch\finance-manager-pro\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:33397)
+    at Array.toJSON (C:\Users\gaato\.gemini\antigravity\scratch\finance-manager-pro\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:28935)
+    at stringify (<anonymous>)
+    at eX (C:\Users\gaato\.gemini\antigravity\scratch\finance-manager-pro\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:42569)
